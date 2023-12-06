@@ -1,0 +1,42 @@
+version: '3.9'
+services:
+  app:
+    container_name: app_back
+    environment:
+      - DB_NAME=${DB_NAME:-appdb}
+      - DB_HOST=${DB_HOST:-postgresdb}
+      - DB_USER=${DB_USER:-db_user}
+      - DB_PASSWORD=${DB_PASSWORD:-db_password}
+      - JWT_SECRET=${JWT_SECRET:-1234567890}
+    build:
+      context: ../
+      dockerfile: .docker/Dockerfile
+    ports:
+      - '8081:8080'
+    restart: unless-stopped
+    depends_on:
+      - appdb
+    networks:
+      - default
+
+  appdb:
+    image: postgres:15
+    container_name: app_db
+    environment:
+      - POSTGRES_USER=${DB_USER:-db_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-db_password}
+      - POSTGRES_DB=${DB_NAME:-appdb}
+      - DATABASE_HOST=${DB_HOST:-localhost}
+    volumes:
+      - pg_data_app:/var/lib/postgresql/data
+    ports:
+      - '54323:5432'
+    networks:
+      - default
+
+volumes:
+  pg_data_app:
+
+networks:
+  default:
+    driver: bridge
