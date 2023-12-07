@@ -68,4 +68,4 @@ jobs:
             docker pull "${{ secrets.REGISTRY_ADDRESS }}/${{ env.REPO }}:latest"
 
             # Run a new container from a new image
-            docker compose up -d horodyna_go_server
+            docker compose up -d horodyna_server
