@@ -1,6 +1,6 @@
 module boilerplate
 
-go 1.19
+go 1.21
 
 require (
 	github.com/go-chi/chi/v5 v5.0.8
@@ -36,7 +36,6 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lib/pq v1.10.7 // indirect
-	github.com/mattn/go-sqlite3 v1.14.18 // indirect
 	github.com/segmentio/fasthash v1.0.3 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	golang.org/x/sys v0.3.0 // indirect
