@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -48,6 +49,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Use(cont.AuthMw)
 
 				UserRouter(apiRouter, cont.UserController)
+				FarmRouter(apiRouter, cont.FarmController)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -64,6 +66,31 @@ func Router(cont container.Container) http.Handler {
 	})
 
 	return router
+}
+
+func FarmRouter(r chi.Router, uc controllers.FarmController) {
+	r.Route("/farms", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			uc.ListView(),
+		)
+		apiRouter.Get(
+			"/{id}",
+			uc.FindById(),
+		)
+		apiRouter.Post(
+			"/",
+			uc.Save(),
+		)
+		apiRouter.Put(
+			"/{id}",
+			uc.Update(),
+		)
+		apiRouter.Delete(
+			"/{id}",
+			uc.Delete(),
+		)
+	})
 }
 
 func AuthRouter(r chi.Router, ac controllers.AuthController, amw func(http.Handler) http.Handler) {
