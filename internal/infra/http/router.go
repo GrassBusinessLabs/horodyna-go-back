@@ -42,6 +42,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Route("/auth", func(apiRouter chi.Router) {
 					AuthRouter(apiRouter, cont.AuthController, cont.AuthMw)
 				})
+				CategoryRouter(apiRouter, cont.CategoryController)
 			})
 
 			// Protected routes
@@ -66,6 +67,15 @@ func Router(cont container.Container) http.Handler {
 	})
 
 	return router
+}
+
+func CategoryRouter(r chi.Router, uc controllers.CategoryController) {
+	r.Route("/categories", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			uc.FindAll(),
+		)
+	})
 }
 
 func FarmRouter(r chi.Router, uc controllers.FarmController) {
