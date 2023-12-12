@@ -6,11 +6,12 @@ import (
 	"boilerplate/internal/infra/database"
 	"boilerplate/internal/infra/http/controllers"
 	"boilerplate/internal/infra/http/middlewares"
+	"log"
+	"net/http"
+
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/upper/db/v4"
 	"github.com/upper/db/v4/adapter/postgresql"
-	"log"
-	"net/http"
 )
 
 type Container struct {
@@ -26,11 +27,15 @@ type Middlewares struct {
 type Services struct {
 	app.AuthService
 	app.UserService
+	app.FarmService
+	app.CategoryService
 }
 
 type Controllers struct {
 	controllers.AuthController
 	controllers.UserController
+	controllers.FarmController
+	controllers.CategoryController
 }
 
 func New(conf config.Configuration) Container {
@@ -39,12 +44,17 @@ func New(conf config.Configuration) Container {
 
 	userRepository := database.NewUserRepository(sess)
 	sessionRepository := database.NewSessRepository(sess)
+	farmRepository := database.NewFarmRepository(sess)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
+	farmService := app.NewFarmService(farmRepository)
+	catService := app.NewCategoryService()
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
+	farmController := controllers.NewFarmController(farmService, userService)
+	categoryController := controllers.NewCategoryController(catService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -55,10 +65,14 @@ func New(conf config.Configuration) Container {
 		Services: Services{
 			authService,
 			userService,
+			farmService,
+			catService,
 		},
 		Controllers: Controllers{
 			authController,
 			userController,
+			farmController,
+			categoryController,
 		},
 	}
 }

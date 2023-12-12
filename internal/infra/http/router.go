@@ -3,13 +3,17 @@ package http
 import (
 	"boilerplate/config"
 	"boilerplate/config/container"
+	"boilerplate/internal/app"
+	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/http/controllers"
+	"boilerplate/internal/infra/http/middlewares"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -41,6 +45,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Route("/auth", func(apiRouter chi.Router) {
 					AuthRouter(apiRouter, cont.AuthController, cont.AuthMw)
 				})
+				CategoryRouter(apiRouter, cont.CategoryController)
 			})
 
 			// Protected routes
@@ -48,6 +53,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Use(cont.AuthMw)
 
 				UserRouter(apiRouter, cont.UserController)
+				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -64,6 +70,44 @@ func Router(cont container.Container) http.Handler {
 	})
 
 	return router
+}
+
+func CategoryRouter(r chi.Router, categoryController controllers.CategoryController) {
+	r.Route("/categories", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			categoryController.FindAll(),
+		)
+	})
+}
+
+func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService) {
+
+	pathObjectMiddleware := middlewares.PathObject("farmId", controllers.FarmKey, fs)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Farm](controllers.FarmKey)
+
+	r.Route("/farms", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			uc.ListView(),
+		)
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{farmId}",
+			uc.FindById(),
+		)
+		apiRouter.Post(
+			"/",
+			uc.Save(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{farmId}",
+			uc.Update(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{farmId}",
+			uc.Delete(),
+		)
+	})
 }
 
 func AuthRouter(r chi.Router, ac controllers.AuthController, amw func(http.Handler) http.Handler) {
