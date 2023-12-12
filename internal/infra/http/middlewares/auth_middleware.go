@@ -6,11 +6,12 @@ import (
 	"boilerplate/internal/infra/http/controllers"
 	"context"
 	"errors"
+	"net/http"
+
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/upper/db/v4"
-	"net/http"
 )
 
 func AuthMiddleware(ja *jwtauth.JWTAuth, as app.AuthService, us app.UserService) func(http.Handler) http.Handler {

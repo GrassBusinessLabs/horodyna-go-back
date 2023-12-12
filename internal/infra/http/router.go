@@ -3,7 +3,10 @@ package http
 import (
 	"boilerplate/config"
 	"boilerplate/config/container"
+	"boilerplate/internal/app"
+	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/http/controllers"
+	"boilerplate/internal/infra/http/middlewares"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -50,7 +53,7 @@ func Router(cont container.Container) http.Handler {
 				apiRouter.Use(cont.AuthMw)
 
 				UserRouter(apiRouter, cont.UserController)
-				FarmRouter(apiRouter, cont.FarmController)
+				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -69,35 +72,39 @@ func Router(cont container.Container) http.Handler {
 	return router
 }
 
-func CategoryRouter(r chi.Router, uc controllers.CategoryController) {
+func CategoryRouter(r chi.Router, categoryController controllers.CategoryController) {
 	r.Route("/categories", func(apiRouter chi.Router) {
 		apiRouter.Get(
 			"/",
-			uc.FindAll(),
+			categoryController.FindAll(),
 		)
 	})
 }
 
-func FarmRouter(r chi.Router, uc controllers.FarmController) {
+func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService) {
+
+	pathObjectMiddleware := middlewares.PathObject("farmId", controllers.FarmKey, fs)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Farm](controllers.FarmKey)
+
 	r.Route("/farms", func(apiRouter chi.Router) {
 		apiRouter.Get(
 			"/",
 			uc.ListView(),
 		)
-		apiRouter.Get(
-			"/{id}",
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{farmId}",
 			uc.FindById(),
 		)
 		apiRouter.Post(
 			"/",
 			uc.Save(),
 		)
-		apiRouter.Put(
-			"/{id}",
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{farmId}",
 			uc.Update(),
 		)
-		apiRouter.Delete(
-			"/{id}",
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{farmId}",
 			uc.Delete(),
 		)
 	})

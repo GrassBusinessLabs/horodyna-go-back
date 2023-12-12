@@ -12,18 +12,18 @@ type FarmDto struct {
 	City      string  `json:"city"`
 	Address   string  `json:"address"`
 	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"logitude"`
+	Longitude float64 `json:"longitude"`
 	User      UserDto `json:"user"`
 }
 
 type FarmsDto struct {
 	Items []FarmDto `json:"items"`
-	Total uint64    `json:"total"`
 	Pages uint      `json:"pages"`
+	Total uint64    `json:"total"`
 }
 
 func (d FarmDto) DomainToDto(farm domain.Farm, us app.UserService) FarmDto {
-	user, err := us.FindById(farm.User_id)
+	user, err := us.FindById(farm.UserId)
 	if err != nil {
 		log.Println(err)
 	}
@@ -39,7 +39,7 @@ func (d FarmDto) DomainToDto(farm domain.Farm, us app.UserService) FarmDto {
 	}
 }
 
-func (d FarmDto) DomainToDtoCollection(farms domain.Farms, us app.UserService) FarmsDto {
+func (d FarmDto) DomainToDtoPaginatedCollection(farms domain.Farms, pag domain.Pagination, us app.UserService) FarmsDto {
 	result := make([]FarmDto, len(farms.Items))
 
 	for i := range farms.Items {

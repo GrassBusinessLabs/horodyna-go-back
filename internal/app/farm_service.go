@@ -11,29 +11,27 @@ type FarmService interface {
 	FindById(id uint64) (domain.Farm, error)
 	Update(farm domain.Farm, req domain.Farm) (domain.Farm, error)
 	Delete(id uint64) error
-	FindAll() (domain.Farms, error)
-	Count() uint64
-}
-
-type farmService struct {
-	farmRepo database.FarmRepository
-}
-
-func (f farmService) Count() uint64 {
-	count, err := f.farmRepo.Count()
-
-	if err != nil {
-		log.Printf("FarmService: %s", err)
-		return 0
-	}
-
-	return count
+	Find(uint64) (interface{}, error)
+	FindAll(p domain.Pagination) (domain.Farms, error)
 }
 
 func NewFarmService(fr database.FarmRepository) FarmService {
 	return farmService{
 		farmRepo: fr,
 	}
+}
+
+type farmService struct {
+	farmRepo database.FarmRepository
+}
+
+func (s farmService) Find(id uint64) (interface{}, error) {
+	f, err := s.farmRepo.FindById(id)
+	if err != nil {
+		log.Printf("FarmService -> Find: %s", err)
+		return domain.Farm{}, err
+	}
+	return f, err
 }
 
 func (s farmService) Save(farm domain.Farm) (domain.Farm, error) {
@@ -78,8 +76,8 @@ func (s farmService) Delete(id uint64) error {
 	return nil
 }
 
-func (s farmService) FindAll() (domain.Farms, error) {
-	farms, err := s.farmRepo.FindAll()
+func (s farmService) FindAll(p domain.Pagination) (domain.Farms, error) {
+	farms, err := s.farmRepo.FindAll(p)
 	if err != nil {
 		log.Printf("FarmService: %s", err)
 		return domain.Farms{}, err

@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS farms
 (
     id           SERIAL PRIMARY KEY,
-    name         TEXT,
+    name         TEXT NOT NULL,
     city         TEXT,
     address      TEXT,
     latitude     FLOAT8,

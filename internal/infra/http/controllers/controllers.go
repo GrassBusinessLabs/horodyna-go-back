@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -11,14 +12,27 @@ import (
 define your own type to avoid collisions */
 // type CtxStrKey string
 
-type ctxKey struct {
+type CtxKey struct {
 	name string
 }
 
+type Userable interface {
+	GetUserId() uint64
+}
+
 var (
-	UserKey = ctxKey{name: "user"}
-	SessKey = ctxKey{name: "sess"}
+	UserKey = CtxKey{name: "user"}
+	SessKey = CtxKey{name: "sess"}
+	FarmKey = CtxKey{name: "farmId"}
 )
+
+func GetUserKey() CtxKey {
+	return UserKey
+}
+
+func GetPathValFromCtx[domainType Userable](ctx context.Context, key CtxKey) Userable {
+	return ctx.Value(key).(Userable)
+}
 
 func Ok(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
