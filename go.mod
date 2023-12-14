@@ -12,6 +12,7 @@ require (
 	github.com/lestrrat-go/jwx/v2 v2.0.8
 	github.com/upper/db/v4 v4.6.0
 	golang.org/x/crypto v0.4.0
+	golang.org/x/image v0.0.0-20210216034530-4410531fe030
 )
 
 require (
