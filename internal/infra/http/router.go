@@ -54,7 +54,10 @@ func Router(cont container.Container) http.Handler {
 
 				UserRouter(apiRouter, cont.UserController)
 				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
+<<<<<<< HEAD
 				OfferRouter(apiRouter, cont.OfferController, cont.OfferService)
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -83,6 +86,10 @@ func CategoryRouter(r chi.Router, categoryController controllers.CategoryControl
 }
 
 func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService) {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 	pathObjectMiddleware := middlewares.PathObject("farmId", controllers.FarmKey, fs)
 	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Farm](controllers.FarmKey)
 
@@ -110,6 +117,7 @@ func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService)
 	})
 }
 
+<<<<<<< HEAD
 func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferService) {
 
 	pathObjectMiddleware := middlewares.PathObject("offerId", controllers.OfferKey, os)
@@ -139,6 +147,8 @@ func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferServi
 	})
 }
 
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 func AuthRouter(r chi.Router, ac controllers.AuthController, amw func(http.Handler) http.Handler) {
 	r.Route("/", func(apiRouter chi.Router) {
 		apiRouter.Post(

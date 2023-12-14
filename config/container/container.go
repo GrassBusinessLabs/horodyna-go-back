@@ -30,8 +30,11 @@ type Services struct {
 	app.UserService
 	app.FarmService
 	app.CategoryService
+<<<<<<< HEAD
 	app.OfferService
 	fileService filesystem.ImageStorageService
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 }
 
 type Controllers struct {
@@ -39,7 +42,10 @@ type Controllers struct {
 	controllers.UserController
 	controllers.FarmController
 	controllers.CategoryController
+<<<<<<< HEAD
 	controllers.OfferController
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 }
 
 func New(conf config.Configuration) Container {
@@ -49,20 +55,29 @@ func New(conf config.Configuration) Container {
 	userRepository := database.NewUserRepository(sess)
 	sessionRepository := database.NewSessRepository(sess)
 	farmRepository := database.NewFarmRepository(sess)
+<<<<<<< HEAD
 	offerRepository := database.NewOfferRepository(sess)
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
 	farmService := app.NewFarmService(farmRepository)
 	catService := app.NewCategoryService()
+<<<<<<< HEAD
 	offerService := app.NewOfferService(offerRepository)
 	imageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
+<<<<<<< HEAD
 	offerController := controllers.NewOfferController(offerService, farmService, userService, imageService)
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -75,15 +90,21 @@ func New(conf config.Configuration) Container {
 			userService,
 			farmService,
 			catService,
+<<<<<<< HEAD
 			offerService,
 			imageService,
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 		},
 		Controllers: Controllers{
 			authController,
 			userController,
 			farmController,
 			categoryController,
+<<<<<<< HEAD
 			offerController,
+=======
+>>>>>>> 0155198fc8277ca536fde512340a43011cd41860
 		},
 	}
 }
