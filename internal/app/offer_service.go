@@ -45,7 +45,12 @@ func (s offerService) Save(offer domain.Offer, fs filesystem.ImageStorageService
 	}
 
 	offer.Cover = offer.Image.Name
-	fs.SaveImage(offer.Cover, decodedBytes)
+	err = fs.SaveImage(offer.Cover, decodedBytes)
+
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+		return domain.Offer{}, err
+	}
 
 	offer, uerr := s.offerRepo.Update(offer)
 	if uerr != nil {
@@ -81,11 +86,22 @@ func (s offerService) Update(off domain.Offer, req domain.Offer, fs filesystem.I
 		return domain.Offer{}, err
 	}
 
-	fs.RemoveImage(off.Cover)
+	err = fs.RemoveImage(off.Cover)
+
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+	}
+
 	req.Id = off.Id
 	req.UserId = off.UserId
 
-	fs.SaveImage(req.Image.Name, decodedBytes)
+	err = fs.SaveImage(req.Image.Name, decodedBytes)
+
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+		return domain.Offer{}, err
+	}
+
 	req.Cover = req.Image.Name
 
 	offer, err := s.offerRepo.Update(req)

@@ -116,7 +116,14 @@ func (c OfferController) Update() http.HandlerFunc {
 func (c OfferController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OfferKey).(domain.Offer)
-		c.offerService.Delete(o, c.fileService)
+		err := c.offerService.Delete(o, c.fileService)
+
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
 		Ok(w)
 	}
 }
