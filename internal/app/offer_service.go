@@ -114,8 +114,14 @@ func (s offerService) Update(off domain.Offer, req domain.Offer, fs filesystem.I
 }
 
 func (s offerService) Delete(offer domain.Offer, fs filesystem.ImageStorageService) error {
-	fs.RemoveImage(offer.Cover)
-	err := s.offerRepo.Delete(offer.Id)
+	err := fs.RemoveImage(offer.Cover)
+
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+		return err
+	}
+
+	err = s.offerRepo.Delete(offer.Id)
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return err
