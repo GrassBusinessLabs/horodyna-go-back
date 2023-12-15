@@ -10,18 +10,18 @@ type ImageRequest struct {
 }
 
 type OfferRequest struct {
-	Title       string       `json:"title" validate:"required,gte=1,max=40"`
-	Description string       `json:"description" validate:"required"`
-	Category    string       `json:"category" validate:"required"`
-	Price       float64      `json:"price" validate:"required"`
-	Unit        string       `json:"unit" validate:"required"`
-	Stock       uint         `json:"stock" validate:"required"`
-	FarmId      uint64       `json:"farm_id" validate:"required"`
-	Status      bool         `json:"status"`
-	Image       ImageRequest `json:"image" validate:"required"`
+	Title       string        `json:"title" validate:"required,gte=1,max=40"`
+	Description string        `json:"description" validate:"required"`
+	Category    string        `json:"category" validate:"required"`
+	Price       float64       `json:"price" validate:"required"`
+	Unit        string        `json:"unit" validate:"required"`
+	Stock       uint          `json:"stock" validate:"required"`
+	FarmId      uint64        `json:"farm_id" validate:"required"`
+	Status      bool          `json:"status"`
+	Cover       *ImageRequest `json:"image"`
 }
 
-func (m ImageRequest) ToDomainModel() interface{} {
+func (m ImageRequest) ToDomainModel() domain.Image {
 	return domain.Image{
 		Name: m.Name,
 		Data: m.Data,
@@ -29,6 +29,11 @@ func (m ImageRequest) ToDomainModel() interface{} {
 }
 
 func (m OfferRequest) ToDomainModel() (interface{}, error) {
+	var img domain.Image
+	if m.Cover != nil {
+		img = m.Cover.ToDomainModel()
+	}
+
 	return domain.Offer{
 		Title:       m.Title,
 		Description: m.Description,
@@ -37,7 +42,7 @@ func (m OfferRequest) ToDomainModel() (interface{}, error) {
 		Unit:        m.Unit,
 		Stock:       m.Stock,
 		Status:      m.Status,
-		FarmId:      m.FarmId,
-		Image:       domain.Image(m.Image),
+		Farm:        domain.Farm{Id: m.FarmId},
+		Cover:       img,
 	}, nil
 }

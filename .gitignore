@@ -21,6 +21,5 @@ go.work
 .idea
 .vscode
 .env
-.png
-.jpg
+/file_storage/
 appname.db

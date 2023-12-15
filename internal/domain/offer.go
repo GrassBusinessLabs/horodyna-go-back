@@ -12,11 +12,10 @@ type Offer struct {
 	Price       float64
 	Unit        string
 	Stock       uint
-	Cover       string
 	Status      bool
-	FarmId      uint64
 	UserId      uint64
-	Image       Image
+	Farm        Farm
+	Cover       Image
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate *time.Time

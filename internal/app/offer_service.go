@@ -9,22 +9,24 @@ import (
 )
 
 type OfferService interface {
-	Save(offer domain.Offer, fs filesystem.ImageStorageService) (domain.Offer, error)
+	Save(offer domain.Offer) (domain.Offer, error)
 	FindById(id uint64) (domain.Offer, error)
-	Update(off domain.Offer, req domain.Offer, fs filesystem.ImageStorageService) (domain.Offer, error)
-	Delete(offer domain.Offer, fs filesystem.ImageStorageService) error
+	Update(off domain.Offer, req domain.Offer) (domain.Offer, error)
+	Delete(offer domain.Offer) error
 	Find(uint64) (interface{}, error)
-	FindAll(p domain.Pagination) (domain.Offers, error)
+	FindAll(user domain.User, p domain.Pagination) (domain.Offers, error)
 }
 
-func NewOfferService(or database.OfferRepository) OfferService {
+func NewOfferService(or database.OfferRepository, fs filesystem.ImageStorageService) OfferService {
 	return offerService{
-		offerRepo: or,
+		offerRepo:    or,
+		imageService: fs,
 	}
 }
 
 type offerService struct {
-	offerRepo database.OfferRepository
+	offerRepo    database.OfferRepository
+	imageService filesystem.ImageStorageService
 }
 
 func (s offerService) Find(id uint64) (interface{}, error) {
@@ -36,26 +38,25 @@ func (s offerService) Find(id uint64) (interface{}, error) {
 	return f, err
 }
 
-func (s offerService) Save(offer domain.Offer, fs filesystem.ImageStorageService) (domain.Offer, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(offer.Image.Data)
+func (s offerService) Save(offer domain.Offer) (domain.Offer, error) {
+	decodedBytes, err := base64.StdEncoding.DecodeString(offer.Cover.Data)
 
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
 	}
 
-	offer.Cover = offer.Image.Name
-	err = fs.SaveImage(offer.Cover, decodedBytes)
+	err = s.imageService.SaveImage(offer.Cover.Name, decodedBytes)
 
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
 	}
 
-	offer, uerr := s.offerRepo.Update(offer)
-	if uerr != nil {
-		log.Printf("OfferService: %s", uerr)
-		return domain.Offer{}, uerr
+	offer, err = s.offerRepo.Update(offer)
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+		return domain.Offer{}, err
 	}
 
 	o, err := s.offerRepo.Save(offer)
@@ -78,32 +79,29 @@ func (os offerService) FindById(id uint64) (domain.Offer, error) {
 	return offer, err
 }
 
-func (s offerService) Update(off domain.Offer, req domain.Offer, fs filesystem.ImageStorageService) (domain.Offer, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.Image.Data)
+func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, error) {
+	decodedBytes, err := base64.StdEncoding.DecodeString(req.Cover.Data)
 
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
 	}
 
-	err = fs.RemoveImage(off.Cover)
+	if req.Cover.Name != off.Cover.Name {
+		err = s.imageService.RemoveImage(off.Cover.Name)
+		if err != nil {
+			log.Printf("OfferService: %s", err)
+		}
 
-	if err != nil {
-		log.Printf("OfferService: %s", err)
+		err = s.imageService.SaveImage(req.Cover.Name, decodedBytes)
+		if err != nil {
+			log.Printf("OfferService: %s", err)
+			return domain.Offer{}, err
+		}
 	}
 
 	req.Id = off.Id
 	req.UserId = off.UserId
-
-	err = fs.SaveImage(req.Image.Name, decodedBytes)
-
-	if err != nil {
-		log.Printf("OfferService: %s", err)
-		return domain.Offer{}, err
-	}
-
-	req.Cover = req.Image.Name
-
 	offer, err := s.offerRepo.Update(req)
 	if err != nil {
 		log.Printf("OfferService: %s", err)
@@ -113,8 +111,8 @@ func (s offerService) Update(off domain.Offer, req domain.Offer, fs filesystem.I
 	return offer, nil
 }
 
-func (s offerService) Delete(offer domain.Offer, fs filesystem.ImageStorageService) error {
-	err := fs.RemoveImage(offer.Cover)
+func (s offerService) Delete(offer domain.Offer) error {
+	err := s.imageService.RemoveImage(offer.Cover.Name)
 
 	if err != nil {
 		log.Printf("OfferService: %s", err)
@@ -130,8 +128,8 @@ func (s offerService) Delete(offer domain.Offer, fs filesystem.ImageStorageServi
 	return nil
 }
 
-func (s offerService) FindAll(p domain.Pagination) (domain.Offers, error) {
-	offers, err := s.offerRepo.FindAll(p)
+func (s offerService) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
+	offers, err := s.offerRepo.FindAll(user, p)
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offers{}, err

@@ -1,9 +1,7 @@
 package resources
 
 import (
-	"boilerplate/internal/app"
 	"boilerplate/internal/domain"
-	"log"
 )
 
 type OfferDto struct {
@@ -16,7 +14,8 @@ type OfferDto struct {
 	Stock       uint    `json:"stock"`
 	Status      bool    `json:"status"`
 	Cover       string  `json:"image"`
-	Farm        FarmDto `json:"farm"`
+	UserId      uint64  `json:"user_id"`
+	FarmId      uint64  `json:"farm_id"`
 }
 
 type OffersDto struct {
@@ -25,12 +24,7 @@ type OffersDto struct {
 	Total uint64     `json:"total"`
 }
 
-func (d OfferDto) DomainToDto(offer domain.Offer, fs app.FarmService, us app.UserService) OfferDto {
-	farm, err := fs.FindById(offer.FarmId)
-	if err != nil {
-		log.Println(err)
-	}
-
+func (d OfferDto) DomainToDto(offer domain.Offer) OfferDto {
 	return OfferDto{
 		Id:          offer.Id,
 		Title:       offer.Title,
@@ -39,17 +33,18 @@ func (d OfferDto) DomainToDto(offer domain.Offer, fs app.FarmService, us app.Use
 		Price:       offer.Price,
 		Unit:        offer.Unit,
 		Stock:       offer.Stock,
-		Cover:       offer.Cover,
+		Cover:       offer.Cover.Name,
 		Status:      offer.Status,
-		Farm:        FarmDto{}.DomainToDto(farm, us),
+		FarmId:      offer.Farm.Id,
+		UserId:      offer.UserId,
 	}
 }
 
-func (d OfferDto) DomainToDtoPaginatedCollection(offers domain.Offers, pag domain.Pagination, fs app.FarmService, us app.UserService) OffersDto {
+func (d OfferDto) DomainToDtoPaginatedCollection(offers domain.Offers) OffersDto {
 	result := make([]OfferDto, len(offers.Items))
 
 	for i := range offers.Items {
-		result[i] = d.DomainToDto(offers.Items[i], fs, us)
+		result[i] = d.DomainToDto(offers.Items[i])
 	}
 
 	return OffersDto{Items: result, Pages: offers.Pages, Total: offers.Total}
