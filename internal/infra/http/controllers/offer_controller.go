@@ -13,14 +13,12 @@ import (
 type OfferController struct {
 	offerService app.OfferService
 	farmService  app.FarmService
-	userService  app.UserService
 }
 
-func NewOfferController(os app.OfferService, fr app.FarmService, us app.UserService) OfferController {
+func NewOfferController(os app.OfferService, fr app.FarmService) OfferController {
 	return OfferController{
 		offerService: os,
 		farmService:  fr,
-		userService:  us,
 	}
 }
 

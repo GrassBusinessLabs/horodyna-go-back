@@ -61,7 +61,7 @@ func New(conf config.Configuration) Container {
 	userController := controllers.NewUserController(userService)
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
-	offerController := controllers.NewOfferController(offerService, farmService, userService)
+	offerController := controllers.NewOfferController(offerService, farmService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
