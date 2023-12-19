@@ -3,6 +3,7 @@ package container
 import (
 	"boilerplate/config"
 	"boilerplate/internal/app"
+	"boilerplate/internal/filesystem"
 	"boilerplate/internal/infra/database"
 	"boilerplate/internal/infra/http/controllers"
 	"boilerplate/internal/infra/http/middlewares"
@@ -29,6 +30,7 @@ type Services struct {
 	app.UserService
 	app.FarmService
 	app.CategoryService
+	app.OfferService
 }
 
 type Controllers struct {
@@ -36,6 +38,7 @@ type Controllers struct {
 	controllers.UserController
 	controllers.FarmController
 	controllers.CategoryController
+	controllers.OfferController
 }
 
 func New(conf config.Configuration) Container {
@@ -45,16 +48,20 @@ func New(conf config.Configuration) Container {
 	userRepository := database.NewUserRepository(sess)
 	sessionRepository := database.NewSessRepository(sess)
 	farmRepository := database.NewFarmRepository(sess)
+	offerRepository := database.NewOfferRepository(sess, farmRepository)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
 	farmService := app.NewFarmService(farmRepository)
 	catService := app.NewCategoryService()
+	imageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
+	offerService := app.NewOfferService(offerRepository, imageService)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
+	offerController := controllers.NewOfferController(offerService, farmService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -67,12 +74,14 @@ func New(conf config.Configuration) Container {
 			userService,
 			farmService,
 			catService,
+			offerService,
 		},
 		Controllers: Controllers{
 			authController,
 			userController,
 			farmController,
 			categoryController,
+			offerController,
 		},
 	}
 }
