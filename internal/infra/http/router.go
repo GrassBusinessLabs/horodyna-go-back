@@ -55,6 +55,8 @@ func Router(cont container.Container) http.Handler {
 				UserRouter(apiRouter, cont.UserController)
 				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
 				OfferRouter(apiRouter, cont.OfferController, cont.OfferService)
+				OrderRouter(apiRouter, cont.OrderController, cont.OrderService)
+				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -71,6 +73,55 @@ func Router(cont container.Container) http.Handler {
 	})
 
 	return router
+}
+
+func OrderItemRoute(r chi.Router, oc controllers.OrderItemController, os app.OrderService, o app.OrderItemsService) {
+	pathObjectMiddleware := middlewares.PathObject("orderId", controllers.OrderKey, os)
+	pathObjectItemMiddleware := middlewares.PathObject("orderItemId", controllers.OrderItemKey, o)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Order](controllers.OrderKey)
+
+	r.Route("/order-items", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectItemMiddleware).Get(
+			"/{orderItemId}",
+			oc.FindById(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Post(
+			"/{orderId}",
+			oc.AddItem(),
+		)
+		apiRouter.With(pathObjectMiddleware, pathObjectItemMiddleware, isOwnerMiddleware).Put(
+			"/{orderId}/{orderItemId}",
+			oc.Update(),
+		)
+		apiRouter.With(pathObjectMiddleware, pathObjectItemMiddleware, isOwnerMiddleware).Delete(
+			"/{orderId}/{orderItemId}",
+			oc.Delete(),
+		)
+	})
+}
+
+func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderService) {
+	pathObjectMiddleware := middlewares.PathObject("orderId", controllers.OrderKey, os)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Order](controllers.OrderKey)
+
+	r.Route("/orders", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{orderId}",
+			oc.FindById(),
+		)
+		apiRouter.Post(
+			"/",
+			oc.Save(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{orderId}",
+			oc.Update(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{orderId}",
+			oc.Delete(),
+		)
+	})
 }
 
 func CategoryRouter(r chi.Router, categoryController controllers.CategoryController) {

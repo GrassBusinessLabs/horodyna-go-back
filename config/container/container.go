@@ -31,6 +31,8 @@ type Services struct {
 	app.FarmService
 	app.CategoryService
 	app.OfferService
+	app.OrderService
+	app.OrderItemsService
 }
 
 type Controllers struct {
@@ -39,6 +41,8 @@ type Controllers struct {
 	controllers.FarmController
 	controllers.CategoryController
 	controllers.OfferController
+	controllers.OrderController
+	controllers.OrderItemController
 }
 
 func New(conf config.Configuration) Container {
@@ -49,6 +53,8 @@ func New(conf config.Configuration) Container {
 	sessionRepository := database.NewSessRepository(sess)
 	farmRepository := database.NewFarmRepository(sess)
 	offerRepository := database.NewOfferRepository(sess, farmRepository)
+	orderItemRepository := database.NewOrderItemRepository(sess, offerRepository)
+	orderRepository := database.NewOrderRepository(sess, orderItemRepository)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
@@ -56,12 +62,16 @@ func New(conf config.Configuration) Container {
 	catService := app.NewCategoryService()
 	imageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
 	offerService := app.NewOfferService(offerRepository, imageService)
+	orderService := app.NewOrderService(orderRepository)
+	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
 	offerController := controllers.NewOfferController(offerService, farmService)
+	orderController := controllers.NewOrderController(orderService)
+	orderItemController := controllers.NewOrderItemController(orderItemService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -75,6 +85,8 @@ func New(conf config.Configuration) Container {
 			farmService,
 			catService,
 			offerService,
+			orderService,
+			orderItemService,
 		},
 		Controllers: Controllers{
 			authController,
@@ -82,6 +94,8 @@ func New(conf config.Configuration) Container {
 			farmController,
 			categoryController,
 			offerController,
+			orderController,
+			orderItemController,
 		},
 	}
 }
