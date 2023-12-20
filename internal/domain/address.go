@@ -4,15 +4,15 @@ import "time"
 
 // Address представляє структуру для адреси.
 type Address struct {
-	ID          uint64    `db:"id"`
-	UserID      uint64    `db:"user_id"`
-	Street      string    `db:"street"`
-	City        string    `db:"city"`
-	State       string    `db:"state"`
-	ZipCode     string    `db:"zip_code"`
-	CreatedDate time.Time `db:"created_date"`
-	UpdatedDate time.Time `db:"updated_date"`
-	DeletedDate time.Time `db:"deleted_date"`
+	ID          uint64
+	UserID      uint64
+	Street      string
+	City        string
+	State       string
+	ZipCode     string
+	CreatedDate time.Time
+	UpdatedDate time.Time
+	DeletedDate time.Time
 }
 
 // Addresses представляє список адрес.

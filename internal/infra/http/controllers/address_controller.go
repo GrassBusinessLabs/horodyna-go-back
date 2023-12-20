@@ -25,7 +25,6 @@ func (c AddressController) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
 		address, err := requests.Bind(r, requests.AddressRequest{}, domain.Address{})
-		address.UserID = u.Id
 
 		if err != nil {
 			log.Printf("AddressController: %s", err)
@@ -33,6 +32,8 @@ func (c AddressController) Create() http.HandlerFunc {
 
 			return
 		}
+
+		address.UserID = u.Id
 
 		address, err = c.addresservice.Create(address)
 
