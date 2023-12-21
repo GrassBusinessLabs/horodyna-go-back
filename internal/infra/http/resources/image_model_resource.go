@@ -3,8 +3,8 @@ package resources
 import "boilerplate/internal/domain"
 
 type ImageMDto struct {
-	Id       uint64 `json:"id"`
-	Title    string `json:"title"`
+	Name     string `json:"name"`
+	Data     string `json:"data"`
 	Entity   string `json:"entity"`
 	EntityId uint64 `json:"entity_id"`
 }
@@ -15,10 +15,10 @@ type ImagesMDto struct {
 	Pages uint        `json:"pages"`
 }
 
-func (d ImageMDto) DomainToDto(imageM domain.ImageModel) ImageMDto {
+func (d ImageMDto) DomainToDto(imageM domain.Image) ImageMDto {
 	return ImageMDto{
-		Id:       imageM.Id,
-		Title:    imageM.Title,
+		Name:     imageM.Name,
+		Data:     imageM.Data,
 		Entity:   imageM.Entity,
 		EntityId: imageM.EntityId,
 	}

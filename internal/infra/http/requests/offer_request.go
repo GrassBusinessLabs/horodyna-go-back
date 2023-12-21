@@ -5,8 +5,10 @@ import (
 )
 
 type ImageRequest struct {
-	Name string `json:"name" validate:"required"`
-	Data string `json:"data" validate:"required"`
+	Name     string `json:"name" validate:"required"`
+	Data     string `json:"data" validate:"required"`
+	Entity   string `json:"entity"`
+	EntityId uint64 `json:"entityId"`
 }
 
 type OfferRequest struct {
@@ -30,8 +32,10 @@ func (m ImageRequest) ToDomainModelWithoutInt() domain.Image {
 
 func (m ImageRequest) ToDomainModel() (interface{}, error) {
 	return domain.Image{
-		Name: m.Name,
-		Data: m.Data,
+		Entity:   m.Entity,
+		EntityId: m.EntityId,
+		Name:     m.Name,
+		Data:     m.Data,
 	}, nil
 }
 

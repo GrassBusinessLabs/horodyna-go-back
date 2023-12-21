@@ -21,10 +21,11 @@ func NewImageModelController(ir app.ImageModelService) ImageModelController {
 
 func (c ImageModelController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		decodedBytes, err := requests.Bind(r, requests.RegisterRequest{}, domain.ImageModel{})
+		imageM, err := requests.Bind(r, requests.ImageRequest{}, domain.Image{})
 		if err != nil {
 			log.Printf("ImageModelController: %s", err)
 			BadRequest(w, err)
+			return
 		}
 
 		imageM, err = c.imageModelService.Save(imageM)
@@ -47,8 +48,8 @@ func (c ImageModelController) Update() http.HandlerFunc {
 			return
 		}
 
-		i := r.Context().Value(UserKey).(domain.ImageModel)
-		imageM, err = c.imageModelService.Update(i, domain.ImageModel{Entity: })
+		i := r.Context().Value(UserKey).(domain.Image)
+		imageM, err = c.imageModelService.Update(i, domain.Image{})
 		if err != nil {
 			log.Printf("ImageModelController: %s", err)
 			InternalServerError(w, err)
@@ -60,11 +61,18 @@ func (c ImageModelController) Update() http.HandlerFunc {
 	}
 }
 
+func (c ImageModelController) FindById() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		image := r.Context().Value(ImageKey).(domain.Image)
+		Success(w, resources.ImageMDto{}.DomainToDto(image))
+	}
+}
+
 func (c ImageModelController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		u := r.Context().Value(UserKey).(domain.ImageModel)
+		u := r.Context().Value(UserKey).(domain.Image)
 
-		err := c.imageModelService.Delete(u.Id)
+		err := c.imageModelService.Delete(u.EntityId)
 		if err != nil {
 			log.Printf("ImageModelController: %s", err)
 			InternalServerError(w, err)

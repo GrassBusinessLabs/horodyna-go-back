@@ -31,6 +31,7 @@ type Services struct {
 	app.FarmService
 	app.CategoryService
 	app.OfferService
+	app.ImageModelService
 }
 
 type Controllers struct {
@@ -39,6 +40,7 @@ type Controllers struct {
 	controllers.FarmController
 	controllers.CategoryController
 	controllers.OfferController
+	controllers.ImageModelController
 }
 
 func New(conf config.Configuration) Container {
@@ -49,19 +51,22 @@ func New(conf config.Configuration) Container {
 	sessionRepository := database.NewSessRepository(sess)
 	farmRepository := database.NewFarmRepository(sess)
 	offerRepository := database.NewOfferRepository(sess, farmRepository)
+	ImageRepository := database.NewImageModelRepository(sess)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
 	farmService := app.NewFarmService(farmRepository)
 	catService := app.NewCategoryService()
-	imageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
-	offerService := app.NewOfferService(offerRepository, imageService)
+	imageStorageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
+	offerService := app.NewOfferService(offerRepository, imageStorageService)
+	imageService := app.NewImageModelService(ImageRepository, imageStorageService)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
 	offerController := controllers.NewOfferController(offerService, farmService)
+	imageController := controllers.NewImageModelController(imageService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -75,6 +80,7 @@ func New(conf config.Configuration) Container {
 			farmService,
 			catService,
 			offerService,
+			imageService,
 		},
 		Controllers: Controllers{
 			authController,
@@ -82,6 +88,7 @@ func New(conf config.Configuration) Container {
 			farmController,
 			categoryController,
 			offerController,
+			imageController,
 		},
 	}
 }

@@ -25,6 +25,7 @@ var (
 	SessKey  = CtxKey{name: "sess"}
 	FarmKey  = CtxKey{name: "farmId"}
 	OfferKey = CtxKey{name: "offerId"}
+	ImageKey = CtxKey{name: "imageId"}
 )
 
 func GetUserKey() CtxKey {

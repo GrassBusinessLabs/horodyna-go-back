@@ -1,7 +1,14 @@
 package requests
 
 type RegisterIamgeModelRequest struct {
-	Image ImageRequest `json:"title" validate:"required,gte=1,max=40"`
+	Image ImageModelRequest `json:"image" validate:"required,gte=1,max=40"`
+}
+
+type ImageModelRequest struct {
+	Name     string `json:"name" validate:"required"`
+	Data     string `json:"data" validate:"required"`
+	Entity   string `json:"entity" validate:"required"`
+	EntityId uint64 `json:"entityId" validate:"required"`
 }
 
 type UpdateIamgeModelRequest struct {
