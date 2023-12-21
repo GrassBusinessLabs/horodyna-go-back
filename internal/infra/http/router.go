@@ -54,6 +54,7 @@ func Router(cont container.Container) http.Handler {
 
 				UserRouter(apiRouter, cont.UserController)
 				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
+				OfferRouter(apiRouter, cont.OfferController, cont.OfferService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 
@@ -113,7 +114,6 @@ func AddressRouter(r chi.Router, uc controllers.AddressController, as app.Addres
 }
 
 func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService) {
-
 	pathObjectMiddleware := middlewares.PathObject("farmId", controllers.FarmKey, fs)
 	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Farm](controllers.FarmKey)
 
@@ -137,6 +137,35 @@ func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService)
 		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
 			"/{farmId}",
 			uc.Delete(),
+		)
+	})
+}
+
+func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferService) {
+
+	pathObjectMiddleware := middlewares.PathObject("offerId", controllers.OfferKey, os)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Offer](controllers.OfferKey)
+
+	r.Route("/offers", func(apiRouter chi.Router) {
+		apiRouter.Post(
+			"/",
+			oc.Save(),
+		)
+		apiRouter.Get(
+			"/",
+			oc.ListView(),
+		)
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{offerId}",
+			oc.FindById(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{offerId}",
+			oc.Delete(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{offerId}",
+			oc.Update(),
 		)
 	})
 }

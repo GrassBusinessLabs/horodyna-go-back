@@ -30,6 +30,7 @@ func (c FarmController) Save() http.HandlerFunc {
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			BadRequest(w, err)
+			return
 		}
 
 		farm, err = c.farmService.Save(farm)

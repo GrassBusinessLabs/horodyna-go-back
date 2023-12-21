@@ -24,6 +24,7 @@ var (
 	UserKey    = CtxKey{name: "user"}
 	SessKey    = CtxKey{name: "sess"}
 	FarmKey    = CtxKey{name: "farmId"}
+	OfferKey   = CtxKey{name: "offerId"}
 	AddressKey = CtxKey{name: "address"}
 )
 
