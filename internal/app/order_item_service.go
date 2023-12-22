@@ -15,18 +15,18 @@ type OrderItemsService interface {
 
 func NewOrderItemsService(or database.OrderItemRepository, order database.OrderRepository) orderItemsService {
 	return orderItemsService{
-		order_items_repo: or,
-		order_repo:       order,
+		orderItemsRepo: or,
+		orderRepo:      order,
 	}
 }
 
 type orderItemsService struct {
-	order_items_repo database.OrderItemRepository
-	order_repo       database.OrderRepository
+	orderItemsRepo database.OrderItemRepository
+	orderRepo      database.OrderRepository
 }
 
 func (s orderItemsService) Find(id uint64) (interface{}, error) {
-	o, err := s.order_items_repo.FindById(id)
+	o, err := s.orderItemsRepo.FindById(id)
 	if err != nil {
 		log.Printf("OrderItemService -> Find: %s", err)
 		return domain.Order{}, err
@@ -36,12 +36,12 @@ func (s orderItemsService) Find(id uint64) (interface{}, error) {
 }
 
 func (s orderItemsService) Save(ord domain.OrderItem, orderId uint64) (domain.OrderItem, error) {
-	o, err := s.order_items_repo.Save(ord, orderId)
+	o, err := s.orderItemsRepo.Save(ord, orderId)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return domain.OrderItem{}, err
 	}
-	err = s.order_repo.Recalculate(orderId)
+	err = s.orderRepo.Recalculate(orderId)
 	return o, err
 }
 
@@ -49,13 +49,13 @@ func (s orderItemsService) Update(ord domain.OrderItem, req domain.OrderItem) (d
 	ord.Amount = req.Amount
 	ord.TotalPrice = ord.Price * float64(req.Amount)
 
-	order_item, err := s.order_items_repo.Update(ord)
+	order_item, err := s.orderItemsRepo.Update(ord)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return domain.OrderItem{}, err
 	}
 
-	err = s.order_repo.Recalculate(ord.OrderId)
+	err = s.orderRepo.Recalculate(ord.OrderId)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return domain.OrderItem{}, err
@@ -65,13 +65,13 @@ func (s orderItemsService) Update(ord domain.OrderItem, req domain.OrderItem) (d
 }
 
 func (s orderItemsService) Delete(order domain.OrderItem) error {
-	err := s.order_items_repo.Delete(order)
+	err := s.orderItemsRepo.Delete(order)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return err
 	}
 
-	err = s.order_repo.Recalculate(order.OrderId)
+	err = s.orderRepo.Recalculate(order.OrderId)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return err
