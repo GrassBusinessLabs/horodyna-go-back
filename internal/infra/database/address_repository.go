@@ -13,10 +13,12 @@ const AddressTableName = "addresses"
 type address struct {
 	ID          uint64    `db:"id,omitempty"`
 	UserID      uint64    `db:"user_id"`
-	Street      string    `db:"street"`
+	Title       string    `db:"title"`
 	City        string    `db:"city"`
-	State       string    `db:"state"`
-	ZipCode     string    `db:"zip_code"`
+	Country     string    `db:"country"`
+	Address     string    `db:"address"`
+	Lat         string    `db:"lat"`
+	Lon         string    `db:"lon"`
 	CreatedDate time.Time `db:"created_date,omitempty"`
 	UpdatedDate time.Time `db:"updated_date,omitempty"`
 	DeletedDate time.Time `db:"deleted_date,omitempty"`
@@ -100,10 +102,12 @@ func (r addressRepository) mapDomainToModel(m domain.Address) address {
 	return address{
 		ID:          m.ID,
 		UserID:      m.UserID,
-		Street:      m.Street,
+		Title:       m.Title,
 		City:        m.City,
-		State:       m.State,
-		ZipCode:     m.ZipCode,
+		Country:     m.Country,
+		Address:     m.Address,
+		Lat:         m.Lat,
+		Lon:         m.Lon,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
@@ -114,10 +118,12 @@ func (r addressRepository) mapModelToDomain(m address) domain.Address {
 	return domain.Address{
 		ID:          m.ID,
 		UserID:      m.UserID,
-		Street:      m.Street,
+		Title:       m.Title,
 		City:        m.City,
-		State:       m.State,
-		ZipCode:     m.ZipCode,
+		Country:     m.Country,
+		Address:     m.Address,
+		Lat:         m.Lat,
+		Lon:         m.Lon,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,

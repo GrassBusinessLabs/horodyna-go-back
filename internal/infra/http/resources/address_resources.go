@@ -7,10 +7,13 @@ import (
 )
 
 type AddressDto struct {
-	Street  string  `json:"street"`
+	UserID  uint64  `json:"user_id"`
+	Title   string  `json:"title"`
 	City    string  `json:"city"`
-	State   string  `json:"state"`
-	ZipCode string  `json:"zip_code"`
+	Country string  `json:"country"`
+	Address string  `json:"address"`
+	Lat     string  `json:"lat"`
+	Lon     string  `json:"lon"`
 	User    UserDto `json:"user"`
 }
 
@@ -27,10 +30,13 @@ func (d AddressDto) DomainToDto(address domain.Address, userService app.UserServ
 	}
 
 	return AddressDto{
-		Street:  address.Street,
+		UserID:  address.UserID,
+		Title:   address.Title,
 		City:    address.City,
-		State:   address.State,
-		ZipCode: address.ZipCode,
+		Country: address.Country,
+		Address: address.Address,
+		Lat:     address.Lat,
+		Lon:     address.Lon,
 		User:    UserDto{}.DomainToDto(user),
 	}
 }

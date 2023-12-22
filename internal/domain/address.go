@@ -6,10 +6,12 @@ import "time"
 type Address struct {
 	ID          uint64
 	UserID      uint64
-	Street      string
+	Title       string
 	City        string
-	State       string
-	ZipCode     string
+	Country     string
+	Address     string
+	Lat         string
+	Lon         string
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate time.Time
