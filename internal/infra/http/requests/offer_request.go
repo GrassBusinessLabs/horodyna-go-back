@@ -8,7 +8,7 @@ type ImageRequest struct {
 	Name     string `json:"name" validate:"required"`
 	Data     string `json:"data" validate:"required"`
 	Entity   string `json:"entity"`
-	EntityId uint64 `json:"entityId"`
+	EntityId uint64 `json:"entity_id"`
 }
 
 type OfferRequest struct {

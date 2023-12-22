@@ -10,9 +10,8 @@ import (
 const ImageTableName = "images"
 
 type image struct {
-	Id          uint64     `db:"id, omitempty"`
+	Id          uint64     `db:"id,omitempty"`
 	Name        string     `db:"title"`
-	Data        string     `db:"data"`
 	Entity      string     `db:"entity"`
 	EntityId    uint64     `db:"entity_id"`
 	CreatedDate time.Time  `db:"created_date,omitempty"`
@@ -74,8 +73,8 @@ func (r imageRepository) Delete(id uint64) error {
 
 func (r imageRepository) mapDomainToModel(d domain.Image) image {
 	return image{
+		Id:       d.Id,
 		Name:     d.Name,
-		Data:     d.Data,
 		Entity:   d.Entity,
 		EntityId: d.EntityId,
 	}
@@ -83,8 +82,8 @@ func (r imageRepository) mapDomainToModel(d domain.Image) image {
 
 func (r imageRepository) mapModelToDomain(m image) domain.Image {
 	return domain.Image{
+		Id:       m.Id,
 		Name:     m.Name,
-		Data:     m.Data,
 		Entity:   m.Entity,
 		EntityId: m.EntityId,
 	}

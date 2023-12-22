@@ -23,14 +23,15 @@ func (c ImageModelController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		imageM, err := requests.Bind(r, requests.ImageRequest{}, domain.Image{})
 		if err != nil {
-			log.Printf("ImageModelController: %s", err)
+			log.Printf("ImageModelController: 1 %s", err)
 			BadRequest(w, err)
 			return
 		}
+		log.Println(imageM.EntityId)
 
 		imageM, err = c.imageModelService.Save(imageM)
 		if err != nil {
-			log.Printf("ImageModelController: %s", err)
+			log.Printf("ImageModelController: 2 %s", err)
 			BadRequest(w, err)
 			return
 		}
