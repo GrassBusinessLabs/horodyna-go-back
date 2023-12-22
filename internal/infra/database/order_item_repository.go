@@ -10,7 +10,7 @@ import (
 
 const OrderItemsTableName = "order_items"
 
-type order_item struct {
+type orderItem struct {
 	Id          uint64     `db:"id,omitempty"`
 	Title       string     `db:"title"`
 	Price       float64    `db:"price"`
@@ -29,6 +29,7 @@ type OrderItemRepository interface {
 	FindAll(pag domain.Pagination) (domain.OrderItems, error)
 	FindAllWithoutPagination(id uint64) ([]domain.OrderItem, error)
 	FindById(id uint64) (domain.OrderItem, error)
+	DeleteByOrder(order domain.Order) error
 	Delete(ords domain.OrderItem) error
 }
 
@@ -45,7 +46,7 @@ func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository) OrderI
 }
 
 func (r orderItemRepository) FindById(id uint64) (domain.OrderItem, error) {
-	var o order_item
+	var o orderItem
 	err := r.coll.Find(db.Cond{"id": id}).One(&o)
 	if err != nil {
 		return domain.OrderItem{}, err
@@ -62,7 +63,7 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 
 	ords.Title = offer.Title
 	ords.Price = offer.Price
-	ords.TotalPrice = offer.Price * float64(ords.Amount)
+	ords.TotalPrice = math.Round(offer.Price*float64(ords.Amount)*100) / 100
 	o := r.mapDomainToModel(ords)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
 	err = r.coll.InsertReturning(&o)
@@ -84,6 +85,21 @@ func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, er
 	return r.mapModelToDomain(o), nil
 }
 
+func (r orderItemRepository) DeleteByOrder(order domain.Order) error {
+	query := r.coll.Find(db.Cond{})
+	for _, item := range order.OrderItems {
+		query.And(db.Cond{"id": item.Id})
+	}
+
+	err := query.Update(map[string]interface{}{"deleted_date": time.Now()})
+	if err != nil {
+		return err
+	}
+
+	err = r.coll.Find(db.Cond{"id": order.Id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
+	return err
+}
+
 func (r orderItemRepository) Delete(ords domain.OrderItem) error {
 	err := r.coll.Find(db.Cond{"id": ords.Id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 	if err != nil {
@@ -94,7 +110,7 @@ func (r orderItemRepository) Delete(ords domain.OrderItem) error {
 }
 
 func (r orderItemRepository) FindAll(p domain.Pagination) (domain.OrderItems, error) {
-	var data []order_item
+	var data []orderItem
 	query := r.coll.Find(db.Cond{})
 
 	res := query.Paginate(uint(p.CountPerPage))
@@ -117,7 +133,7 @@ func (r orderItemRepository) FindAll(p domain.Pagination) (domain.OrderItems, er
 }
 
 func (r orderItemRepository) FindAllWithoutPagination(order_id uint64) ([]domain.OrderItem, error) {
-	var order_items []order_item
+	var order_items []orderItem
 	err := r.coll.Find(db.Cond{"order_id": order_id, "deleted_date": nil}).All(&order_items)
 	if err != nil {
 		return []domain.OrderItem{}, err
@@ -126,8 +142,8 @@ func (r orderItemRepository) FindAllWithoutPagination(order_id uint64) ([]domain
 	return r.mapModelToDomainMass(order_items), nil
 }
 
-func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) order_item {
-	return order_item{
+func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {
+	return orderItem{
 		Id:          m.Id,
 		Price:       m.Price,
 		TotalPrice:  m.TotalPrice,
@@ -141,7 +157,7 @@ func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) order_item {
 	}
 }
 
-func (r orderItemRepository) mapModelToDomain(m order_item) domain.OrderItem {
+func (r orderItemRepository) mapModelToDomain(m orderItem) domain.OrderItem {
 	return domain.OrderItem{
 		Id:          m.Id,
 		Price:       m.Price,
@@ -156,7 +172,7 @@ func (r orderItemRepository) mapModelToDomain(m order_item) domain.OrderItem {
 	}
 }
 
-func (o orderItemRepository) mapModelToDomainMass(order_items []order_item) []domain.OrderItem {
+func (o orderItemRepository) mapModelToDomainMass(order_items []orderItem) []domain.OrderItem {
 	new_order_items := make([]domain.OrderItem, len(order_items))
 	for i, order_item := range order_items {
 		new_order_items[i] = o.mapModelToDomain(order_item)
@@ -164,6 +180,6 @@ func (o orderItemRepository) mapModelToDomainMass(order_items []order_item) []do
 	return new_order_items
 }
 
-func (o orderItemRepository) mapModelToDomainPagination(order_items []order_item) domain.OrderItems {
+func (o orderItemRepository) mapModelToDomainPagination(order_items []orderItem) domain.OrderItems {
 	return domain.OrderItems{Items: o.mapModelToDomainMass(order_items)}
 }

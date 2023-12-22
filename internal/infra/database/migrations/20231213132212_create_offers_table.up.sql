@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS offers
     title        TEXT NOT NULL,
     description  TEXT NOT NULL,
     category     TEXT NOT NULL,
-    price        FLOAT4 NOT NULL,
+    price        FLOAT8 NOT NULL,
     unit         TEXT NOT NULL,
     stock        INTEGER NOT NULL,
     cover        TEXT NOT NULL,

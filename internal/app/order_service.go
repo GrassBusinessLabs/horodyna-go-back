@@ -30,6 +30,7 @@ func (s orderService) Find(id uint64) (interface{}, error) {
 		log.Printf("OrderService -> Find: %s", err)
 		return domain.Order{}, err
 	}
+
 	return o, err
 }
 
@@ -56,6 +57,10 @@ func (s orderService) FindById(id uint64) (domain.Order, error) {
 func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, error) {
 	ord.AddressId = req.AddressId
 	ord.Comment = req.Comment
+	if ord.ShippingPrice != req.ShippingPrice {
+		ord.TotalPrice = req.ShippingPrice + ord.ProductsPrice
+	}
+
 	ord.ShippingPrice = req.ShippingPrice
 	ord.Status = req.Status
 	order, err := s.order_repo.Update(ord)

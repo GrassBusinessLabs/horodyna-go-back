@@ -89,12 +89,12 @@ func OrderItemRoute(r chi.Router, oc controllers.OrderItemController, os app.Ord
 			"/{orderId}",
 			oc.AddItem(),
 		)
-		apiRouter.With(pathObjectMiddleware, pathObjectItemMiddleware, isOwnerMiddleware).Put(
-			"/{orderId}/{orderItemId}",
+		apiRouter.With(pathObjectItemMiddleware).Put(
+			"/{orderItemId}",
 			oc.Update(),
 		)
-		apiRouter.With(pathObjectMiddleware, pathObjectItemMiddleware, isOwnerMiddleware).Delete(
-			"/{orderId}/{orderItemId}",
+		apiRouter.With(pathObjectItemMiddleware).Delete(
+			"/{orderItemId}",
 			oc.Delete(),
 		)
 	})

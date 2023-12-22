@@ -23,7 +23,6 @@ func (c OrderItemController) AddItem() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OrderKey).(domain.Order)
 		orderI, err := requests.Bind(r, requests.OrderItemRequest{}, domain.OrderItem{})
-
 		if err != nil {
 			log.Printf("OrderController: %s", err)
 			BadRequest(w, err)
@@ -52,7 +51,6 @@ func (c OrderItemController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OrderItemKey).(domain.OrderItem)
 		order, err := requests.Bind(r, requests.OrderItemUpdateRequest{}, domain.OrderItem{})
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)
@@ -60,7 +58,6 @@ func (c OrderItemController) Update() http.HandlerFunc {
 		}
 
 		newOrder, err := c.orderItemService.Update(o, order)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)
@@ -75,7 +72,6 @@ func (c OrderItemController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OrderItemKey).(domain.OrderItem)
 		err := c.orderItemService.Delete(o)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)

@@ -2,6 +2,8 @@ package database
 
 import (
 	"boilerplate/internal/domain"
+	"errors"
+	"math"
 	"time"
 
 	"github.com/upper/db/v4"
@@ -17,10 +19,19 @@ type order struct {
 	ProductsPrice float64    `db:"products_price"`
 	ShippingPrice float64    `db:"shipping_price"`
 	TotalPrice    float64    `db:"total_price"`
-	Status        bool       `db:"status"`
+	Status        string     `db:"status"`
 	CreatedDate   time.Time  `db:"created_date,omitempty"`
 	UpdatedDate   time.Time  `db:"updated_date,omitempty"`
 	DeletedDate   *time.Time `db:"deleted_date,omitempty"`
+}
+
+var orderStatuses = [...]domain.OrderStatus{
+	domain.COMPLETED,
+	domain.APPROVED,
+	domain.DECLINED,
+	domain.DRAFT,
+	domain.SHIPPING,
+	domain.SUBMITTED,
 }
 
 type OrderRepository interface {
@@ -45,6 +56,7 @@ func NewOrderRepository(dbSession db.Session, order_item_repo OrderItemRepositor
 
 func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	o := r.mapDomainToModel(order)
+	o.Status = string(domain.DRAFT)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
 	err := r.coll.InsertReturning(&o)
 	if err != nil {
@@ -58,27 +70,37 @@ func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 			return domain.Order{}, err
 		}
 		ProdPrice += created.TotalPrice
+		ProdPrice = math.Round(ProdPrice*100) / 100
 	}
 
 	order.ProductsPrice = ProdPrice
-	order.TotalPrice = ProdPrice + order.ShippingPrice
+	order.TotalPrice = math.Round((ProdPrice+order.ShippingPrice)*100) / 100
 	order.Id = o.Id
 	o = r.mapDomainToModel(order)
 	err = r.coll.Find(db.Cond{"id": o.Id}).Update(&o)
 	if err != nil {
 		return domain.Order{}, err
 	}
+	orderDomain, err := r.mapModelToDomain(o)
+	if err != nil {
+		return orderDomain, err
+	}
 
-	return r.mapModelToDomain(o), nil
+	return orderDomain, nil
 }
 
 func (r orderRepository) FindById(id uint64) (domain.Order, error) {
 	var o order
-	err := r.coll.Find(db.Cond{"id": id}).One(&o)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&o)
 	if err != nil {
 		return domain.Order{}, err
 	}
-	return r.mapModelToDomain(o), nil
+	orderDomain, err := r.mapModelToDomain(o)
+	if err != nil {
+		return orderDomain, err
+	}
+
+	return orderDomain, nil
 }
 
 func (or orderRepository) Update(req domain.Order) (domain.Order, error) {
@@ -89,15 +111,18 @@ func (or orderRepository) Update(req domain.Order) (domain.Order, error) {
 	if err != nil {
 		return domain.Order{}, err
 	}
-	return or.mapModelToDomain(o), nil
+	orderDomain, err := or.mapModelToDomain(o)
+	if err != nil {
+		return orderDomain, err
+	}
+
+	return orderDomain, nil
 }
 
 func (r orderRepository) Delete(order domain.Order) error {
-	for _, item := range order.OrderItems {
-		err := r.orderItemRepo.Delete(item)
-		if err != nil {
-			return err
-		}
+	err := r.orderItemRepo.DeleteByOrder(order)
+	if err != nil {
+		return err
 	}
 	return r.coll.Find(db.Cond{"id": order.Id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 }
@@ -122,6 +147,25 @@ func (r orderRepository) Recalculate(orderId uint64) error {
 	return nil
 }
 
+func FindOrderStatus(status string) (domain.OrderStatus, error) {
+	for _, item := range orderStatuses {
+		if status == string(item) {
+			return item, nil
+		}
+	}
+
+	return domain.OrderStatus(""), errors.New("The order status does not exists.")
+}
+
+func (r orderRepository) AddOrderItems(o domain.Order) error {
+	orderItems, err := r.orderItemRepo.FindAllWithoutPagination(o.Id)
+	if err != nil {
+		return err
+	}
+	o.OrderItems = orderItems
+	return nil
+}
+
 func (r orderRepository) mapDomainToModel(o domain.Order) order {
 	return order{
 		Id:            o.Id,
@@ -131,17 +175,22 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,
-		Status:        o.Status,
+		Status:        string(o.Status),
 		CreatedDate:   o.CreatedDate,
 		UpdatedDate:   o.UpdatedDate,
 		DeletedDate:   o.DeletedDate,
 	}
 }
 
-func (r orderRepository) mapModelToDomain(o order) domain.Order {
-	order_items, err := r.orderItemRepo.FindAllWithoutPagination(o.Id)
+func (r orderRepository) mapModelToDomain(o order) (domain.Order, error) {
+	orderItems, err := r.orderItemRepo.FindAllWithoutPagination(o.Id)
 	if err != nil {
-		return domain.Order{}
+		return domain.Order{}, err
+	}
+
+	orderStatus, err := FindOrderStatus(o.Status)
+	if err != nil {
+		return domain.Order{}, err
 	}
 
 	return domain.Order{
@@ -149,13 +198,13 @@ func (r orderRepository) mapModelToDomain(o order) domain.Order {
 		Comment:       o.Comment,
 		UserId:        o.UserId,
 		AddressId:     o.AddressId,
-		OrderItems:    order_items,
+		OrderItems:    orderItems,
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,
-		Status:        o.Status,
+		Status:        orderStatus,
 		CreatedDate:   o.CreatedDate,
 		UpdatedDate:   o.UpdatedDate,
 		DeletedDate:   o.DeletedDate,
-	}
+	}, nil
 }

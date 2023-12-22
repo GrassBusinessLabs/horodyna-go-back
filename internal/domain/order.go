@@ -4,6 +4,17 @@ import (
 	"time"
 )
 
+type OrderStatus string
+
+const (
+	DRAFT     OrderStatus = "DRAFT"
+	SUBMITTED OrderStatus = "SUBMITTED"
+	APPROVED  OrderStatus = "APPROVED"
+	DECLINED  OrderStatus = "DECLINED"
+	SHIPPING  OrderStatus = "SHIPPING"
+	COMPLETED OrderStatus = "COMPLETED"
+)
+
 type Order struct {
 	Id            uint64
 	Comment       string
@@ -13,7 +24,7 @@ type Order struct {
 	ProductsPrice float64
 	ShippingPrice float64
 	TotalPrice    float64
-	Status        bool
+	Status        OrderStatus
 	CreatedDate   time.Time
 	UpdatedDate   time.Time
 	DeletedDate   *time.Time

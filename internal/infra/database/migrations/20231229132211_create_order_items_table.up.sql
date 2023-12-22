@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS order_items
     id           SERIAL PRIMARY KEY,
     amount       INTEGER NOT NULL,
     title        TEXT,
-    price        FLOAT4 NOT NULL,
+    price        FLOAT8 NOT NULL,
     total_price  FLOAT8 NOT NULL,
     order_id     INTEGER NOT NULL,
     offer_id     INTEGER NOT NULL,

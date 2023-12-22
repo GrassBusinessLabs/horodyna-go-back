@@ -7,7 +7,7 @@ import (
 type OrderDto struct {
 	Id            uint64         `json:"id"`
 	OrderItems    []OrderItemDto `json:"order_items"`
-	Status        bool           `json:"status"`
+	Status        string         `json:"status"`
 	Comment       string         `json:"comment"`
 	AddressId     uint64         `json:"address_id"`
 	UserId        uint64         `json:"user_id"`
@@ -18,7 +18,6 @@ type OrderDto struct {
 
 func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 	OrderItemsDto := make([]OrderItemDto, len(order.OrderItems))
-
 	for i, item := range order.OrderItems {
 		OrderItemsDto[i] = OrderItemDto{}.DomainToDto(item)
 	}
@@ -26,7 +25,7 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 	return OrderDto{
 		Id:            order.Id,
 		OrderItems:    OrderItemsDto,
-		Status:        order.Status,
+		Status:        string(order.Status),
 		Comment:       order.Comment,
 		AddressId:     order.AddressId,
 		UserId:        order.UserId,

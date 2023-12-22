@@ -2,6 +2,7 @@ package requests
 
 import (
 	"boilerplate/internal/domain"
+	"boilerplate/internal/infra/database"
 )
 
 type OrderRequest struct {
@@ -15,15 +16,20 @@ type UpdateOrderRequest struct {
 	AddressId     uint64  `json:"address_id" validate:"required"`
 	Comment       string  `json:"comment"`
 	ShippingPrice float64 `json:"shipping_price"`
-	Status        bool    `json:"status"`
+	Status        string  `json:"status"`
 }
 
 func (m UpdateOrderRequest) ToDomainModel() (interface{}, error) {
+	status, err := database.FindOrderStatus(m.Status)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
 	return domain.Order{
 		AddressId:     m.AddressId,
 		Comment:       m.Comment,
 		ShippingPrice: m.ShippingPrice,
-		Status:        m.Status,
+		Status:        status,
 	}, nil
 }
 
@@ -42,6 +48,6 @@ func (m OrderRequest) ToDomainModel() (interface{}, error) {
 		Comment:       m.Comment,
 		ShippingPrice: m.ShippingPrice,
 		OrderItems:    new,
-		Status:        true,
+		Status:        domain.DRAFT,
 	}, nil
 }
