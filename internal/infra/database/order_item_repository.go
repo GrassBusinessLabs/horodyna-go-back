@@ -26,7 +26,6 @@ type orderItem struct {
 type OrderItemRepository interface {
 	Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error)
 	Update(ords domain.OrderItem) (domain.OrderItem, error)
-	FindAll(pag domain.Pagination) (domain.OrderItems, error)
 	FindAllWithoutPagination(id uint64) ([]domain.OrderItem, error)
 	FindById(id uint64) (domain.OrderItem, error)
 	DeleteByOrder(order domain.Order) error
@@ -107,29 +106,6 @@ func (r orderItemRepository) Delete(ords domain.OrderItem) error {
 	}
 
 	return err
-}
-
-func (r orderItemRepository) FindAll(p domain.Pagination) (domain.OrderItems, error) {
-	var data []orderItem
-	query := r.coll.Find(db.Cond{})
-
-	res := query.Paginate(uint(p.CountPerPage))
-	err := res.Page(uint(p.Page)).All(&data)
-	if err != nil {
-		return domain.OrderItems{}, err
-	}
-
-	order_items := r.mapModelToDomainPagination(data)
-
-	totalCount, err := res.TotalEntries()
-	if err != nil {
-		return domain.OrderItems{}, err
-	}
-
-	order_items.Total = totalCount
-	order_items.Pages = uint(math.Ceil(float64(order_items.Total) / float64(p.CountPerPage)))
-
-	return order_items, nil
 }
 
 func (r orderItemRepository) FindAllWithoutPagination(order_id uint64) ([]domain.OrderItem, error) {
