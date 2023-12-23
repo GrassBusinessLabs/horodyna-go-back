@@ -1,12 +1,13 @@
-CREATE TABLE IF NOT EXISTS farms
+CREATE TABLE IF NOT EXISTS addresses
 (
     id           SERIAL PRIMARY KEY,
-    name         TEXT NOT NULL,
-    city         TEXT,
-    address      TEXT,
-    latitude     FLOAT8,
-    longitude    FLOAT8,
     user_id      INTEGER NOT NULL,
+    title        TEXT NOT NULL,
+    city         TEXT NOT NULL,
+    country      TEXT NOT NULL,
+    address      TEXT NOT NULL,
+    lat          FLOAT8 NOT NULL,
+    lon          FLOAT8 NOT NULL,
     created_date TIMESTAMP,
     updated_date TIMESTAMP,
     deleted_date TIMESTAMP NULL,

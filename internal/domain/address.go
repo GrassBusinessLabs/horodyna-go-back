@@ -10,8 +10,8 @@ type Address struct {
 	City        string
 	Country     string
 	Address     string
-	Lat         string
-	Lon         string
+	Lat         float64
+	Lon         float64
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate time.Time

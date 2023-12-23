@@ -17,8 +17,8 @@ type address struct {
 	City        string    `db:"city"`
 	Country     string    `db:"country"`
 	Address     string    `db:"address"`
-	Lat         string    `db:"lat"`
-	Lon         string    `db:"lon"`
+	Lat         float64   `db:"lat"`
+	Lon         float64   `db:"lon"`
 	CreatedDate time.Time `db:"created_date,omitempty"`
 	UpdatedDate time.Time `db:"updated_date,omitempty"`
 	DeletedDate time.Time `db:"deleted_date,omitempty"`
