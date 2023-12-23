@@ -189,12 +189,12 @@ func ImageRouter(r chi.Router, ic controllers.ImageModelController, is app.Image
 			"/",
 			ic.Save(),
 		)
-		apiRouter.Put(
-			"/",
+		apiRouter.With(pathObjectMiddleware).Put(
+			"/{imageId}",
 			ic.Update(),
 		)
-		apiRouter.Delete(
-			"/",
+		apiRouter.With(pathObjectMiddleware).Delete(
+			"/{imageId}",
 			ic.Delete(),
 		)
 	})

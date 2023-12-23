@@ -71,7 +71,10 @@ func (s imageModelService) FindById(id uint64) (domain.Image, error) {
 }
 
 func (s imageModelService) Update(imageM domain.Image, req domain.Image) (domain.Image, error) {
-	imageM, err := s.imageMRepo.Update(imageM)
+	req.Entity = imageM.Entity
+	req.EntityId = imageM.EntityId
+	req.Id = imageM.Id
+	imageM, err := s.imageMRepo.Update(req)
 	if err != nil {
 		log.Printf("ImageModelService: %s", err)
 		return domain.Image{}, err

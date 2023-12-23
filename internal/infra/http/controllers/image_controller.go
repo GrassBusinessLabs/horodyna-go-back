@@ -49,7 +49,7 @@ func (c ImageModelController) Update() http.HandlerFunc {
 			return
 		}
 
-		i := r.Context().Value(UserKey).(domain.Image)
+		i := r.Context().Value(ImageKey).(domain.Image)
 		imageM, err = c.imageModelService.Update(i, domain.Image{})
 		if err != nil {
 			log.Printf("ImageModelController: %s", err)
@@ -71,9 +71,9 @@ func (c ImageModelController) FindById() http.HandlerFunc {
 
 func (c ImageModelController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		u := r.Context().Value(UserKey).(domain.Image)
+		u := r.Context().Value(ImageKey).(domain.Image)
 
-		err := c.imageModelService.Delete(u.EntityId)
+		err := c.imageModelService.Delete(u.Id)
 		if err != nil {
 			log.Printf("ImageModelController: %s", err)
 			InternalServerError(w, err)
