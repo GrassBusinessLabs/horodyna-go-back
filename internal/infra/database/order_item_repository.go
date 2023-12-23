@@ -155,7 +155,3 @@ func (o orderItemRepository) mapModelToDomainMass(order_items []orderItem) []dom
 	}
 	return new_order_items
 }
-
-func (o orderItemRepository) mapModelToDomainPagination(order_items []orderItem) domain.OrderItems {
-	return domain.OrderItems{Items: o.mapModelToDomainMass(order_items)}
-}
