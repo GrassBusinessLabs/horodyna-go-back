@@ -38,6 +38,7 @@ type OrderRepository interface {
 	Save(ordr domain.Order) (domain.Order, error)
 	FindById(id uint64) (domain.Order, error)
 	Update(order domain.Order) (domain.Order, error)
+	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
 }
@@ -103,6 +104,30 @@ func (r orderRepository) FindById(id uint64) (domain.Order, error) {
 	return orderDomain, nil
 }
 
+func (or orderRepository) FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error) {
+	var data []order
+	query := or.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil})
+	res := query.Paginate(uint(p.CountPerPage))
+	err := res.Page(uint(p.Page)).All(&data)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	orders, err := or.mapModelToDomainPagination(data)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	totalCount, err := res.TotalEntries()
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	orders.Total = totalCount
+	orders.Pages = uint(math.Ceil(float64(orders.Total) / float64(p.CountPerPage)))
+	return orders, nil
+}
+
 func (or orderRepository) Update(req domain.Order) (domain.Order, error) {
 	var err error
 	o := or.mapDomainToModel(req)
@@ -138,7 +163,7 @@ func (r orderRepository) Recalculate(orderId uint64) error {
 	}
 
 	order.ProductsPrice = ProdPrice
-	order.TotalPrice = ProdPrice + order.ShippingPrice
+	order.TotalPrice = math.Round((ProdPrice+order.ShippingPrice)*100) / 100
 	o := r.mapDomainToModel(order)
 	err = r.coll.Find(db.Cond{"id": order.Id}).Update(&o)
 	if err != nil {
@@ -155,15 +180,6 @@ func FindOrderStatus(status string) (domain.OrderStatus, error) {
 	}
 
 	return domain.OrderStatus(""), errors.New("The order status does not exists.")
-}
-
-func (r orderRepository) AddOrderItems(o domain.Order) error {
-	orderItems, err := r.orderItemRepo.FindAllWithoutPagination(o.Id)
-	if err != nil {
-		return err
-	}
-	o.OrderItems = orderItems
-	return nil
 }
 
 func (r orderRepository) mapDomainToModel(o domain.Order) order {
@@ -207,4 +223,23 @@ func (r orderRepository) mapModelToDomain(o order) (domain.Order, error) {
 		UpdatedDate:   o.UpdatedDate,
 		DeletedDate:   o.DeletedDate,
 	}, nil
+}
+
+func MapModelToDomain(ord order) domain.Order {
+	return domain.Order{
+		Id:     ord.Id,
+		UserId: ord.UserId,
+	}
+}
+
+func (f orderRepository) mapModelToDomainPagination(orders []order) (domain.Orders, error) {
+	newOrders := make([]domain.Order, len(orders))
+	var err error
+	for i, order := range orders {
+		newOrders[i], err = f.mapModelToDomain(order)
+		if err != nil {
+			return domain.Orders{}, err
+		}
+	}
+	return domain.Orders{Items: newOrders}, nil
 }

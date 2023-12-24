@@ -4,6 +4,7 @@ import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/database"
 	"log"
+	"math"
 )
 
 type OrderItemsService interface {
@@ -47,7 +48,7 @@ func (s orderItemsService) Save(ord domain.OrderItem, orderId uint64) (domain.Or
 
 func (s orderItemsService) Update(ord domain.OrderItem, req domain.OrderItem) (domain.OrderItem, error) {
 	ord.Amount = req.Amount
-	ord.TotalPrice = ord.Price * float64(req.Amount)
+	ord.TotalPrice = math.Round(ord.Price*float64(req.Amount)*100) / 100
 
 	order_item, err := s.orderItemsRepo.Update(ord)
 	if err != nil {
@@ -55,7 +56,7 @@ func (s orderItemsService) Update(ord domain.OrderItem, req domain.OrderItem) (d
 		return domain.OrderItem{}, err
 	}
 
-	err = s.orderRepo.Recalculate(ord.OrderId)
+	err = s.orderRepo.Recalculate(ord.Order.Id)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return domain.OrderItem{}, err
@@ -71,7 +72,7 @@ func (s orderItemsService) Delete(order domain.OrderItem) error {
 		return err
 	}
 
-	err = s.orderRepo.Recalculate(order.OrderId)
+	err = s.orderRepo.Recalculate(order.Order.Id)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return err

@@ -48,6 +48,27 @@ func (c OrderController) FindById() http.HandlerFunc {
 	}
 }
 
+func (c OrderController) FindAllByUserId() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		u := r.Context().Value(UserKey).(domain.User)
+		pagination, err := requests.DecodePaginationQuery(r)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		orders, err := c.orderService.FindAllByUserId(u.Id, pagination)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrderDto{}.DomainToDtoPaginatedCollection(orders))
+	}
+}
+
 func (c OrderController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OrderKey).(domain.Order)

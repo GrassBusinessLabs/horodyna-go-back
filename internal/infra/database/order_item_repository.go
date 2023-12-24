@@ -2,6 +2,7 @@ package database
 
 import (
 	"boilerplate/internal/domain"
+	"errors"
 	"math"
 	"time"
 
@@ -35,29 +36,40 @@ type OrderItemRepository interface {
 type orderItemRepository struct {
 	offerRepo OfferRepository
 	coll      db.Collection
+	orderColl db.Collection
 }
 
 func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository) OrderItemRepository {
 	return orderItemRepository{
 		offerRepo: offerR,
 		coll:      dbSession.Collection(OrderItemsTableName),
+		orderColl: dbSession.Collection(OrdersTableName),
 	}
 }
 
 func (r orderItemRepository) FindById(id uint64) (domain.OrderItem, error) {
 	var o orderItem
-	err := r.coll.Find(db.Cond{"id": id}).One(&o)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&o)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
-	return r.mapModelToDomain(o), nil
+
+	order, err := r.mapModelToDomain(o)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+	return order, nil
 }
 
 func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error) {
-	ords.OrderId = orderId
+	ords.Order.Id = orderId
 	offer, err := r.offerRepo.FindById(ords.OfferId)
 	if err != nil {
 		return domain.OrderItem{}, err
+	}
+
+	if offer.Stock < uint(ords.Amount) {
+		return domain.OrderItem{}, errors.New("The orderitem amount can`t be more than in offer.")
 	}
 
 	ords.Title = offer.Title
@@ -66,22 +78,39 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	o := r.mapDomainToModel(ords)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
 	err = r.coll.InsertReturning(&o)
-
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
 
-	return r.mapModelToDomain(o), nil
+	order, err := r.mapModelToDomain(o)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+	return order, nil
 }
 
 func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, error) {
-	o := r.mapDomainToModel(ords)
-	o.UpdatedDate = time.Now()
-	err := r.coll.Find(db.Cond{"id": o.Id}).Update(&o)
+	offer, err := r.offerRepo.FindById(ords.OfferId)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
-	return r.mapModelToDomain(o), nil
+
+	if offer.Stock < uint(ords.Amount) {
+		return domain.OrderItem{}, errors.New("The orderitem amount can`t be more than in offer.")
+	}
+
+	o := r.mapDomainToModel(ords)
+	o.UpdatedDate = time.Now()
+	err = r.coll.Find(db.Cond{"id": o.Id}).Update(&o)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+
+	order, err := r.mapModelToDomain(o)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+	return order, nil
 }
 
 func (r orderItemRepository) DeleteByOrder(order domain.Order) error {
@@ -109,13 +138,27 @@ func (r orderItemRepository) Delete(ords domain.OrderItem) error {
 }
 
 func (r orderItemRepository) FindAllWithoutPagination(order_id uint64) ([]domain.OrderItem, error) {
-	var order_items []orderItem
-	err := r.coll.Find(db.Cond{"order_id": order_id, "deleted_date": nil}).All(&order_items)
+	var orderItems []orderItem
+	err := r.coll.Find(db.Cond{"order_id": order_id, "deleted_date": nil}).All(&orderItems)
 	if err != nil {
 		return []domain.OrderItem{}, err
 	}
 
-	return r.mapModelToDomainMass(order_items), nil
+	newOrderItems, err := r.mapModelToDomainMass(orderItems)
+	if err != nil {
+		return []domain.OrderItem{}, err
+	}
+	return newOrderItems, nil
+}
+
+func (r orderItemRepository) FindOrderWithTwoFields(orderId uint64) (domain.Order, error) {
+	var o order
+	err := r.orderColl.Find(db.Cond{"id": orderId}).Select("id", "user_id").One(&o)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	return MapModelToDomain(o), nil
 }
 
 func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {
@@ -125,7 +168,7 @@ func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {
 		TotalPrice:  m.TotalPrice,
 		Amount:      m.Amount,
 		Title:       m.Title,
-		OrderId:     m.OrderId,
+		OrderId:     m.Order.Id,
 		OfferId:     m.OfferId,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
@@ -133,25 +176,38 @@ func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {
 	}
 }
 
-func (r orderItemRepository) mapModelToDomain(m orderItem) domain.OrderItem {
+func (r orderItemRepository) mapModelToDomain(m orderItem) (domain.OrderItem, error) {
+	order, err := r.FindOrderWithTwoFields(m.OrderId)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+
 	return domain.OrderItem{
 		Id:          m.Id,
 		Price:       m.Price,
 		TotalPrice:  m.TotalPrice,
 		Amount:      m.Amount,
 		Title:       m.Title,
-		OrderId:     m.OrderId,
+		Order:       order,
 		OfferId:     m.OfferId,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
-	}
+	}, nil
 }
 
-func (o orderItemRepository) mapModelToDomainMass(order_items []orderItem) []domain.OrderItem {
-	new_order_items := make([]domain.OrderItem, len(order_items))
-	for i, order_item := range order_items {
-		new_order_items[i] = o.mapModelToDomain(order_item)
+func FindOrderWithTwoFields(u uint64) {
+	panic("unimplemented")
+}
+
+func (o orderItemRepository) mapModelToDomainMass(orderItems []orderItem) ([]domain.OrderItem, error) {
+	newOrderItems := make([]domain.OrderItem, len(orderItems))
+	var err error
+	for i, orderItem := range orderItems {
+		newOrderItems[i], err = o.mapModelToDomain(orderItem)
+		if err != nil {
+			return []domain.OrderItem{}, err
+		}
 	}
-	return new_order_items
+	return newOrderItems, nil
 }

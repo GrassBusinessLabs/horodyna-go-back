@@ -10,7 +10,7 @@ type OrderItem struct {
 	Price       float64
 	TotalPrice  float64
 	Amount      uint32
-	OrderId     uint64
+	Order       Order
 	OfferId     uint64
 	CreatedDate time.Time
 	UpdatedDate time.Time
@@ -21,4 +21,8 @@ type OrderItems struct {
 	Items []OrderItem
 	Total uint64
 	Pages uint
+}
+
+func (o OrderItem) GetUserId() uint64 {
+	return o.Order.UserId
 }

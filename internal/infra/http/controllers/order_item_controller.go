@@ -40,13 +40,6 @@ func (c OrderItemController) AddItem() http.HandlerFunc {
 	}
 }
 
-func (c OrderItemController) FindById() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		o := r.Context().Value(OrderItemKey).(domain.OrderItem)
-		Success(w, resources.OrderItemDto{}.DomainToDto(o))
-	}
-}
-
 func (c OrderItemController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OrderItemKey).(domain.OrderItem)

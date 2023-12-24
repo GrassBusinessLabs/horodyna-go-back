@@ -16,6 +16,12 @@ type OrderDto struct {
 	TotalPrice    float64        `json:"total_price"`
 }
 
+type OrdersDto struct {
+	Items []OrderDto `json:"items"`
+	Pages uint       `json:"pages"`
+	Total uint64     `json:"total"`
+}
+
 func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 	OrderItemsDto := make([]OrderItemDto, len(order.OrderItems))
 	for i, item := range order.OrderItems {
@@ -33,4 +39,14 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 		ShippingPrice: order.ShippingPrice,
 		TotalPrice:    order.TotalPrice,
 	}
+}
+
+func (d OrderDto) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDto {
+	result := make([]OrderDto, len(orders.Items))
+
+	for i := range orders.Items {
+		result[i] = d.DomainToDto(orders.Items[i])
+	}
+
+	return OrdersDto{Items: result, Pages: orders.Pages, Total: orders.Total}
 }

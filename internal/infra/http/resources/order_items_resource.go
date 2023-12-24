@@ -17,7 +17,7 @@ type OrderItemDto struct {
 func (d OrderItemDto) DomainToDto(o domain.OrderItem) OrderItemDto {
 	return OrderItemDto{
 		Id:         o.Id,
-		OrderId:    o.OrderId,
+		OrderId:    o.Order.Id,
 		OfferId:    o.OfferId,
 		Title:      o.Title,
 		Price:      o.Price,

@@ -10,6 +10,7 @@ type OrderService interface {
 	Save(o domain.Order) (domain.Order, error)
 	FindById(id uint64) (domain.Order, error)
 	Update(o domain.Order, req domain.Order) (domain.Order, error)
+	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(o domain.Order) error
 	Find(uint64) (interface{}, error)
 }
@@ -52,6 +53,16 @@ func (s orderService) FindById(id uint64) (domain.Order, error) {
 	}
 
 	return order, err
+}
+
+func (s orderService) FindAllByUserId(userId uint64, pag domain.Pagination) (domain.Orders, error) {
+	orders, err := s.order_repo.FindAllByUserId(userId, pag)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return domain.Orders{}, err
+	}
+
+	return orders, nil
 }
 
 func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, error) {
