@@ -31,6 +31,7 @@ type Services struct {
 	app.FarmService
 	app.CategoryService
 	app.OfferService
+	app.AddressService
 }
 
 type Controllers struct {
@@ -39,6 +40,7 @@ type Controllers struct {
 	controllers.FarmController
 	controllers.CategoryController
 	controllers.OfferController
+	controllers.AddressController
 }
 
 func New(conf config.Configuration) Container {
@@ -49,6 +51,7 @@ func New(conf config.Configuration) Container {
 	sessionRepository := database.NewSessRepository(sess)
 	farmRepository := database.NewFarmRepository(sess)
 	offerRepository := database.NewOfferRepository(sess, farmRepository)
+	addressRepository := database.NewAddressepository(sess)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
@@ -56,12 +59,14 @@ func New(conf config.Configuration) Container {
 	catService := app.NewCategoryService()
 	imageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
 	offerService := app.NewOfferService(offerRepository, imageService)
+	addressService := app.NewAddressService(addressRepository)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
 	offerController := controllers.NewOfferController(offerService, farmService)
+	addressController := controllers.NewAddressController(addressService, userService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -75,6 +80,7 @@ func New(conf config.Configuration) Container {
 			farmService,
 			catService,
 			offerService,
+			addressService,
 		},
 		Controllers: Controllers{
 			authController,
@@ -82,6 +88,7 @@ func New(conf config.Configuration) Container {
 			farmController,
 			categoryController,
 			offerController,
+			addressController,
 		},
 	}
 }
