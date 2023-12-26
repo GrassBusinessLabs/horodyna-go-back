@@ -17,16 +17,16 @@ type OrderService interface {
 
 func NewOrderService(or database.OrderRepository) OrderService {
 	return orderService{
-		order_repo: or,
+		orderRepo: or,
 	}
 }
 
 type orderService struct {
-	order_repo database.OrderRepository
+	orderRepo database.OrderRepository
 }
 
 func (s orderService) Find(id uint64) (interface{}, error) {
-	o, err := s.order_repo.FindById(id)
+	o, err := s.orderRepo.FindById(id)
 	if err != nil {
 		log.Printf("OrderService -> Find: %s", err)
 		return domain.Order{}, err
@@ -36,7 +36,8 @@ func (s orderService) Find(id uint64) (interface{}, error) {
 }
 
 func (s orderService) Save(ord domain.Order) (domain.Order, error) {
-	o, err := s.order_repo.Save(ord)
+	ord.Status = domain.DRAFT
+	o, err := s.orderRepo.Save(ord)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return domain.Order{}, err
@@ -45,7 +46,7 @@ func (s orderService) Save(ord domain.Order) (domain.Order, error) {
 }
 
 func (s orderService) FindById(id uint64) (domain.Order, error) {
-	order, err := s.order_repo.FindById(id)
+	order, err := s.orderRepo.FindById(id)
 
 	if err != nil {
 		log.Printf("OrderService: %s", err)
@@ -56,7 +57,7 @@ func (s orderService) FindById(id uint64) (domain.Order, error) {
 }
 
 func (s orderService) FindAllByUserId(userId uint64, pag domain.Pagination) (domain.Orders, error) {
-	orders, err := s.order_repo.FindAllByUserId(userId, pag)
+	orders, err := s.orderRepo.FindAllByUserId(userId, pag)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return domain.Orders{}, err
@@ -73,8 +74,7 @@ func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, 
 	}
 
 	ord.ShippingPrice = req.ShippingPrice
-	ord.Status = req.Status
-	order, err := s.order_repo.Update(ord)
+	order, err := s.orderRepo.Update(ord)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return domain.Order{}, err
@@ -84,7 +84,7 @@ func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, 
 }
 
 func (s orderService) Delete(order domain.Order) error {
-	err := s.order_repo.Delete(order)
+	err := s.orderRepo.Delete(order)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return err

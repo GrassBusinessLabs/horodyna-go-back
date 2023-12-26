@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS orders
     created_date   TIMESTAMP,
     updated_date   TIMESTAMP,
     deleted_date   TIMESTAMP NULL,
+    CONSTRAINT fk_addresses_id FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE CASCADE,    
     CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

@@ -66,7 +66,7 @@ func (s orderItemsService) Update(ord domain.OrderItem, req domain.OrderItem) (d
 }
 
 func (s orderItemsService) Delete(order domain.OrderItem) error {
-	err := s.orderItemsRepo.Delete(order)
+	err := s.orderItemsRepo.Delete(order.Id)
 	if err != nil {
 		log.Printf("OrderItemService: %s", err)
 		return err

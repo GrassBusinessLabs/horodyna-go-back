@@ -32,3 +32,16 @@ func (m OrderItemRequest) ToDomainModelNotInterface() (domain.OrderItem, error) 
 		OfferId: m.OfferId,
 	}, nil
 }
+
+func (m OrderItemRequest) ToDomainModelArray(arr []OrderItemRequest) ([]domain.OrderItem, error) {
+	var err error
+	new := make([]domain.OrderItem, len(arr))
+	for i, item := range arr {
+		new[i], err = item.ToDomainModelNotInterface()
+		if err != nil {
+			return []domain.OrderItem{}, err
+		}
+	}
+
+	return new, nil
+}

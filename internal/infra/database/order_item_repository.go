@@ -26,11 +26,13 @@ type orderItem struct {
 
 type OrderItemRepository interface {
 	Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error)
+	SaveAll(ords []orderItem, orderId uint64) error
+	PrepareAllToSave(ords []domain.OrderItem, orderUserId uint64) ([]orderItem, float64, error)
 	Update(ords domain.OrderItem) (domain.OrderItem, error)
 	FindAllWithoutPagination(id uint64) ([]domain.OrderItem, error)
 	FindById(id uint64) (domain.OrderItem, error)
-	DeleteByOrder(order domain.Order) error
-	Delete(ords domain.OrderItem) error
+	DeleteByOrder(orderId uint64) error
+	Delete(oiId uint64) error
 }
 
 type orderItemRepository struct {
@@ -61,6 +63,50 @@ func (r orderItemRepository) FindById(id uint64) (domain.OrderItem, error) {
 	return order, nil
 }
 
+func (r orderItemRepository) SaveAll(ords []orderItem, orderId uint64) error {
+	for _, item := range ords {
+		item.OrderId = orderId
+		err := r.coll.InsertReturning(&item)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r orderItemRepository) PrepareAllToSave(ords []domain.OrderItem, orderUserId uint64) ([]orderItem, float64, error) {
+	modelItms := make([]orderItem, len(ords))
+	var prodPrice float64
+	for i, item := range ords {
+		offer, err := r.offerRepo.FindById(item.OfferId)
+		if err != nil {
+			return []orderItem{}, 0, err
+		}
+
+		if offer.Stock < uint(item.Amount) {
+			return []orderItem{}, 0, errors.New("The orderitem amount can`t be more than in offer.")
+		}
+		if offer.UserId == orderUserId {
+			return []orderItem{}, 0, errors.New("The owner of the offer can`t buy his products.")
+		}
+
+		item.Title = offer.Title
+		item.OfferId = offer.Id
+		item.Price = offer.Price
+		item.TotalPrice = math.Round(offer.Price*float64(item.Amount)*100) / 100
+		o := r.mapDomainToModel(item)
+		o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
+		if err != nil {
+			return []orderItem{}, 0, err
+		}
+		prodPrice += o.TotalPrice
+		modelItms[i] = o
+	}
+
+	return modelItms, prodPrice, nil
+}
+
 func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error) {
 	ords.Order.Id = orderId
 	offer, err := r.offerRepo.FindById(ords.OfferId)
@@ -77,7 +123,7 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	ords.TotalPrice = math.Round(offer.Price*float64(ords.Amount)*100) / 100
 	o := r.mapDomainToModel(ords)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
-	err = r.coll.InsertReturning(&o)
+	r.coll.InsertReturning(&o)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
@@ -113,23 +159,13 @@ func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, er
 	return order, nil
 }
 
-func (r orderItemRepository) DeleteByOrder(order domain.Order) error {
-	query := r.coll.Find(db.Cond{})
-	for _, item := range order.OrderItems {
-		query.And(db.Cond{"id": item.Id})
-	}
-
-	err := query.Update(map[string]interface{}{"deleted_date": time.Now()})
-	if err != nil {
-		return err
-	}
-
-	err = r.coll.Find(db.Cond{"id": order.Id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
+func (r orderItemRepository) DeleteByOrder(orderId uint64) error {
+	err := r.coll.Find(db.Cond{"order_id": orderId, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 	return err
 }
 
-func (r orderItemRepository) Delete(ords domain.OrderItem) error {
-	err := r.coll.Find(db.Cond{"id": ords.Id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
+func (r orderItemRepository) Delete(oiId uint64) error {
+	err := r.coll.Find(db.Cond{"id": oiId, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 	if err != nil {
 		return err
 	}
@@ -137,9 +173,9 @@ func (r orderItemRepository) Delete(ords domain.OrderItem) error {
 	return err
 }
 
-func (r orderItemRepository) FindAllWithoutPagination(order_id uint64) ([]domain.OrderItem, error) {
+func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.OrderItem, error) {
 	var orderItems []orderItem
-	err := r.coll.Find(db.Cond{"order_id": order_id, "deleted_date": nil}).All(&orderItems)
+	err := r.coll.Find(db.Cond{"order_id": orderId, "deleted_date": nil}).All(&orderItems)
 	if err != nil {
 		return []domain.OrderItem{}, err
 	}
@@ -194,10 +230,6 @@ func (r orderItemRepository) mapModelToDomain(m orderItem) (domain.OrderItem, er
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
 	}, nil
-}
-
-func FindOrderWithTwoFields(u uint64) {
-	panic("unimplemented")
 }
 
 func (o orderItemRepository) mapModelToDomainMass(orderItems []orderItem) ([]domain.OrderItem, error) {

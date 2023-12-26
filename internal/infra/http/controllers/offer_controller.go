@@ -48,7 +48,6 @@ func (c OfferController) Save() http.HandlerFunc {
 		}
 
 		offer.Farm = farm
-		log.Println(offer.Price)
 		offer, err = c.offerService.Save(offer)
 		if err != nil {
 			log.Printf("OfferController: %s", err)

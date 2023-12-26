@@ -33,6 +33,7 @@ type Services struct {
 	app.OfferService
 	app.OrderService
 	app.OrderItemsService
+	app.AddressService
 }
 
 type Controllers struct {
@@ -43,6 +44,7 @@ type Controllers struct {
 	controllers.OfferController
 	controllers.OrderController
 	controllers.OrderItemController
+	controllers.AddressController
 }
 
 func New(conf config.Configuration) Container {
@@ -55,6 +57,7 @@ func New(conf config.Configuration) Container {
 	offerRepository := database.NewOfferRepository(sess, farmRepository)
 	orderItemRepository := database.NewOrderItemRepository(sess, offerRepository)
 	orderRepository := database.NewOrderRepository(sess, orderItemRepository)
+	addressRepository := database.NewAddressepository(sess)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
@@ -64,6 +67,7 @@ func New(conf config.Configuration) Container {
 	offerService := app.NewOfferService(offerRepository, imageService)
 	orderService := app.NewOrderService(orderRepository)
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
+	addressService := app.NewAddressService(addressRepository)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
@@ -72,6 +76,7 @@ func New(conf config.Configuration) Container {
 	offerController := controllers.NewOfferController(offerService, farmService)
 	orderController := controllers.NewOrderController(orderService)
 	orderItemController := controllers.NewOrderItemController(orderItemService)
+	addressController := controllers.NewAddressController(addressService, userService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -87,6 +92,7 @@ func New(conf config.Configuration) Container {
 			offerService,
 			orderService,
 			orderItemService,
+			addressService,
 		},
 		Controllers: Controllers{
 			authController,
@@ -96,6 +102,7 @@ func New(conf config.Configuration) Container {
 			offerController,
 			orderController,
 			orderItemController,
+			addressController,
 		},
 	}
 }
