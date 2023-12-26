@@ -21,6 +21,32 @@ func NewFarmController(fr app.FarmService, us app.UserService) FarmController {
 	}
 }
 
+func (c FarmController) FindAllByCoords() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pagination, err := requests.DecodePaginationQuery(r)
+		if err != nil {
+			log.Printf("FarmController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		req, err := requests.Bind(r, requests.PointsRequest{}, domain.Points{})
+		if err != nil {
+			log.Printf("FarmController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		farms, err := c.farmService.FindAllByCoords(req, pagination)
+		if err != nil {
+			log.Printf("FarmController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, c.userService))
+	}
+}
+
 func (c FarmController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
@@ -103,6 +129,6 @@ func (c FarmController) ListView() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, pagination, c.userService))
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, c.userService))
 	}
 }

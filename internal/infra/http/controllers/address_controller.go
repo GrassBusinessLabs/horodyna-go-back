@@ -25,7 +25,6 @@ func (c AddressController) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
 		address, err := requests.Bind(r, requests.AddressRequest{}, domain.Address{})
-
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			BadRequest(w, err)
@@ -34,9 +33,7 @@ func (c AddressController) Create() http.HandlerFunc {
 		}
 
 		address.UserID = u.Id
-
 		address, err = c.addresservice.Create(address)
-
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			BadRequest(w, err)
@@ -57,9 +54,7 @@ func (c AddressController) Read() http.HandlerFunc {
 func (c AddressController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(AddressKey).(domain.Address)
-
 		err := c.addresservice.Delete(f.ID)
-
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			InternalServerError(w, err)
@@ -73,7 +68,6 @@ func (c AddressController) Delete() http.HandlerFunc {
 func (c AddressController) FindAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pagination, err := requests.DecodePaginationQuery(r)
-
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			InternalServerError(w, err)
@@ -95,7 +89,6 @@ func (c AddressController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(AddressKey).(domain.Address)
 		address, err := requests.Bind(r, requests.AddressRequest{}, domain.Address{})
-
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			InternalServerError(w, err)
@@ -105,7 +98,6 @@ func (c AddressController) Update() http.HandlerFunc {
 		address.ID = f.ID
 		address.UserID = f.UserID
 		newAddress, err := c.addresservice.Update(address)
-
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			InternalServerError(w, err)

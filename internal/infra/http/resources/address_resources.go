@@ -7,7 +7,7 @@ import (
 )
 
 type AddressDto struct {
-	UserID  uint64  `json:"user_id"`
+	Id      uint64  `json:"id"`
 	Title   string  `json:"title"`
 	City    string  `json:"city"`
 	Country string  `json:"country"`
@@ -30,7 +30,7 @@ func (d AddressDto) DomainToDto(address domain.Address, userService app.UserServ
 	}
 
 	return AddressDto{
-		UserID:  address.UserID,
+		Id:      address.ID,
 		Title:   address.Title,
 		City:    address.City,
 		Country: address.Country,

@@ -15,6 +15,7 @@ type OfferService interface {
 	Delete(offer domain.Offer) error
 	Find(uint64) (interface{}, error)
 	FindAll(user domain.User, p domain.Pagination) (domain.Offers, error)
+	FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error)
 }
 
 func NewOfferService(or database.OfferRepository, fs filesystem.ImageStorageService) OfferService {
@@ -74,6 +75,16 @@ func (os offerService) FindById(id uint64) (domain.Offer, error) {
 	}
 
 	return offer, err
+}
+
+func (s offerService) FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error) {
+	offers, err := s.offerRepo.FindAllByFarmId(farmId, p)
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+		return domain.Offers{}, err
+	}
+
+	return offers, nil
 }
 
 func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, error) {
