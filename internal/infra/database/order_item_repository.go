@@ -123,7 +123,7 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	ords.TotalPrice = math.Round(offer.Price*float64(ords.Amount)*100) / 100
 	o := r.mapDomainToModel(ords)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
-	r.coll.InsertReturning(&o)
+	err = r.coll.InsertReturning(&o)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
