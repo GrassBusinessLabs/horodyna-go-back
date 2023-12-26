@@ -45,7 +45,7 @@ func (c OfferController) Save() http.HandlerFunc {
 		}
 
 		if farm.GetUserId() != u.Id {
-			err := errors.New("User is not a farm owner.")
+			err := errors.New("user is not a farm owner")
 			log.Printf("OfferController: %s", err)
 			BadRequest(w, err)
 			return

@@ -12,7 +12,7 @@ type AddressService interface {
 	Read(id uint64) (domain.Address, error)
 	Update(address domain.Address) (domain.Address, error)
 	Delete(id uint64) error
-	FindAll(domain.Pagination) (domain.Addresses, error)
+	FindAll(domain.Pagination, domain.User) (domain.Addresses, error)
 }
 
 type AddressServiceImpl struct {
@@ -67,8 +67,8 @@ func (as AddressServiceImpl) Delete(id uint64) error {
 	return nil
 }
 
-func (as AddressServiceImpl) FindAll(p domain.Pagination) (domain.Addresses, error) {
-	addresses, err := as.addressRepo.FindAll(p)
+func (as AddressServiceImpl) FindAll(p domain.Pagination, u domain.User) (domain.Addresses, error) {
+	addresses, err := as.addressRepo.FindAll(p, u)
 	if err != nil {
 		log.Printf("AddressService: %s", err)
 		return domain.Addresses{}, err

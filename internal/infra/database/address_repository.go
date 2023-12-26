@@ -29,7 +29,7 @@ type AddressRepository interface {
 	Read(id uint64) (domain.Address, error)
 	Update(address domain.Address) (domain.Address, error)
 	Delete(id uint64) error
-	FindAll(domain.Pagination) (domain.Addresses, error)
+	FindAll(domain.Pagination, domain.User) (domain.Addresses, error)
 }
 
 type addressRepository struct {
@@ -75,10 +75,9 @@ func (r addressRepository) Delete(id uint64) error {
 	return r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 }
 
-func (r addressRepository) FindAll(p domain.Pagination) (domain.Addresses, error) {
+func (r addressRepository) FindAll(p domain.Pagination, u domain.User) (domain.Addresses, error) {
 	var data []address
-	query := r.coll.Find(db.Cond{})
-
+	query := r.coll.Find(db.Cond{"user_id": u.Id})
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
 	if err != nil {

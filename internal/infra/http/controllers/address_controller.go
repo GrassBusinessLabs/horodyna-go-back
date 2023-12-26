@@ -72,6 +72,7 @@ func (c AddressController) Delete() http.HandlerFunc {
 
 func (c AddressController) FindAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		u := r.Context().Value(UserKey).(domain.User)
 		pagination, err := requests.DecodePaginationQuery(r)
 
 		if err != nil {
@@ -80,7 +81,7 @@ func (c AddressController) FindAll() http.HandlerFunc {
 			return
 		}
 
-		address, err := c.addresservice.FindAll(pagination)
+		address, err := c.addresservice.FindAll(pagination, u)
 		if err != nil {
 			log.Printf("AddressController: %s", err)
 			InternalServerError(w, err)

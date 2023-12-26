@@ -5,7 +5,6 @@ import (
 )
 
 type AddressRequest struct {
-	UserID  uint64  `json:"user_id" validate:"required"`
 	Title   string  `json:"title" validate:"required"`
 	City    string  `json:"city" validate:"required"`
 	Country string  `json:"country" validate:"required"`
@@ -16,7 +15,6 @@ type AddressRequest struct {
 
 func (m AddressRequest) ToDomainModel() (interface{}, error) {
 	return domain.Address{
-		UserID:  m.UserID,
 		Title:   m.Title,
 		City:    m.City,
 		Country: m.Country,
