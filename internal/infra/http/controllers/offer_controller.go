@@ -25,9 +25,7 @@ func NewOfferController(os app.OfferService, fr app.FarmService) OfferController
 func (c OfferController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
-
 		offer, err := requests.Bind(r, requests.OfferRequest{}, domain.Offer{})
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			BadRequest(w, err)
@@ -37,13 +35,11 @@ func (c OfferController) Save() http.HandlerFunc {
 		offer.Status = true
 
 		farm, err := c.farmService.FindById(offer.Farm.Id)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			BadRequest(w, err)
 			return
 		}
-
 		if farm.GetUserId() != u.Id {
 			err := errors.New("User is not a farm owner.")
 			log.Printf("OfferController: %s", err)
@@ -53,7 +49,6 @@ func (c OfferController) Save() http.HandlerFunc {
 
 		offer.Farm = farm
 		offer, err = c.offerService.Save(offer)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			BadRequest(w, err)
@@ -75,7 +70,6 @@ func (c OfferController) ListView() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
 		pagination, err := requests.DecodePaginationQuery(r)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)
@@ -83,7 +77,6 @@ func (c OfferController) ListView() http.HandlerFunc {
 		}
 
 		offers, err := c.offerService.FindAll(u, pagination)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)
@@ -97,9 +90,7 @@ func (c OfferController) ListView() http.HandlerFunc {
 func (c OfferController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OfferKey).(domain.Offer)
-
 		offer, err := requests.Bind(r, requests.OfferRequest{}, domain.Offer{})
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)
@@ -107,12 +98,12 @@ func (c OfferController) Update() http.HandlerFunc {
 		}
 
 		newOffer, err := c.offerService.Update(o, offer)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
+
 		Success(w, resources.OfferDto{}.DomainToDto(newOffer))
 	}
 }
@@ -121,7 +112,6 @@ func (c OfferController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OfferKey).(domain.Offer)
 		err := c.offerService.Delete(o)
-
 		if err != nil {
 			log.Printf("OfferController: %s", err)
 			InternalServerError(w, err)

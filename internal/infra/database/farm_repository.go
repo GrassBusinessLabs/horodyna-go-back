@@ -53,7 +53,7 @@ func (r farmRepository) Save(farm domain.Farm) (domain.Farm, error) {
 
 func (r farmRepository) FindById(id uint64) (domain.Farm, error) {
 	var f farm
-	err := r.coll.Find(db.Cond{"id": id}).One(&f)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&f)
 	if err != nil {
 		return domain.Farm{}, err
 	}
@@ -76,7 +76,7 @@ func (r farmRepository) Delete(id uint64) error {
 
 func (r farmRepository) FindAll(p domain.Pagination) (domain.Farms, error) {
 	var data []farm
-	query := r.coll.Find(db.Cond{})
+	query := r.coll.Find(db.Cond{"deleted_date": nil})
 
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)

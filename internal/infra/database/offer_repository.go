@@ -59,7 +59,7 @@ func (r offerRepository) Save(offer domain.Offer) (domain.Offer, error) {
 
 func (r offerRepository) FindById(id uint64) (domain.Offer, error) {
 	var o offer
-	err := r.coll.Find(db.Cond{"id": id}).One(&o)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&o)
 	if err != nil {
 		return domain.Offer{}, err
 	}
@@ -82,7 +82,7 @@ func (r offerRepository) Delete(id uint64) error {
 
 func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
 	var data []offer
-	query := r.coll.Find(db.Cond{"status": true})
+	query := r.coll.Find(db.Cond{"status": true, "delete_date": nil})
 	if user.Id != 0 {
 		query = query.And(db.Cond{"user_id": user.Id})
 	}
@@ -93,7 +93,6 @@ func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.
 	}
 
 	offers := r.mapModelToDomainPagination(data)
-
 	totalCount, err := res.TotalEntries()
 	if err != nil {
 		return domain.Offers{}, err
