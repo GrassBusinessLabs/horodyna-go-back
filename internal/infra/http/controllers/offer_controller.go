@@ -79,6 +79,11 @@ func (c OfferController) FindByFarmId() http.HandlerFunc {
 		}
 
 		offers, err := c.offerService.FindAllByFarmId(farmId, pagination)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			BadRequest(w, err)
+			return
+		}
 		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers))
 	}
 }
