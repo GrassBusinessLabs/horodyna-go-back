@@ -40,28 +40,6 @@ func (c ImageModelController) Save() http.HandlerFunc {
 	}
 }
 
-func (c ImageModelController) Update() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		imageM, err := requests.Bind(r, requests.ImageRequest{}, domain.Image{})
-		if err != nil {
-			log.Printf("ImageModelController: %s", err)
-			BadRequest(w, err)
-			return
-		}
-
-		i := r.Context().Value(ImageKey).(domain.Image)
-		imageM, err = c.imageModelService.Update(i, domain.Image{})
-		if err != nil {
-			log.Printf("ImageModelController: %s", err)
-			InternalServerError(w, err)
-			return
-		}
-
-		var ImageMDto resources.ImageMDto
-		Success(w, ImageMDto.DomainToDto(imageM))
-	}
-}
-
 func (c ImageModelController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		image := r.Context().Value(ImageKey).(domain.Image)

@@ -22,7 +22,6 @@ type image struct {
 type ImageRepository interface {
 	Save(user domain.Image) (domain.Image, error)
 	FindById(id uint64) (domain.Image, error)
-	Update(user domain.Image) (domain.Image, error)
 	Delete(id uint64) error
 }
 
@@ -55,16 +54,6 @@ func (r imageRepository) FindById(id uint64) (domain.Image, error) {
 	}
 	return r.mapModelToDomain(im), nil
 
-}
-
-func (r imageRepository) Update(imageM domain.Image) (domain.Image, error) {
-	i := r.mapDomainToModel(imageM)
-	i.UpdatedDate = time.Now()
-	err := r.coll.Find(db.Cond{"id": i.EntityId}).Update(&i)
-	if err != nil {
-		return domain.Image{}, err
-	}
-	return r.mapModelToDomain(i), nil
 }
 
 func (r imageRepository) Delete(id uint64) error {

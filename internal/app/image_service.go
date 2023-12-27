@@ -12,7 +12,6 @@ type ImageModelService interface {
 	Find(id uint64) (interface{}, error)
 	Save(imageM domain.Image) (domain.Image, error)
 	FindById(id uint64) (domain.Image, error)
-	Update(imageM domain.Image, im domain.Image) (domain.Image, error)
 	Delete(id uint64) error
 }
 
@@ -68,19 +67,6 @@ func (s imageModelService) FindById(id uint64) (domain.Image, error) {
 	}
 
 	return imageM, err
-}
-
-func (s imageModelService) Update(imageM domain.Image, req domain.Image) (domain.Image, error) {
-	req.Entity = imageM.Entity
-	req.EntityId = imageM.EntityId
-	req.Id = imageM.Id
-	imageM, err := s.imageMRepo.Update(req)
-	if err != nil {
-		log.Printf("ImageModelService: %s", err)
-		return domain.Image{}, err
-	}
-
-	return imageM, nil
 }
 
 func (s imageModelService) Delete(id uint64) error {
