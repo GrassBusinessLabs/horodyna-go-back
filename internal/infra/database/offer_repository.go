@@ -32,18 +32,18 @@ type OfferRepository interface {
 	FindById(id uint64) (domain.Offer, error)
 	Update(offer domain.Offer) (domain.Offer, error)
 	FindAll(user domain.User, pag domain.Pagination) (domain.Offers, error)
+	FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error)
+	FindByCategory(category string) ([]domain.Offer, error)
 	Delete(id uint64) error
 }
 
 type offerRepository struct {
-	farmRepo FarmRepository
-	coll     db.Collection
+	coll db.Collection
 }
 
-func NewOfferRepository(dbSession db.Session, farmRepo FarmRepository) OfferRepository {
+func NewOfferRepository(dbSession db.Session) OfferRepository {
 	return offerRepository{
-		farmRepo: farmRepo,
-		coll:     dbSession.Collection(OffersTableName),
+		coll: dbSession.Collection(OffersTableName),
 	}
 }
 
@@ -59,7 +59,7 @@ func (r offerRepository) Save(offer domain.Offer) (domain.Offer, error) {
 
 func (r offerRepository) FindById(id uint64) (domain.Offer, error) {
 	var o offer
-	err := r.coll.Find(db.Cond{"id": id}).One(&o)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&o)
 	if err != nil {
 		return domain.Offer{}, err
 	}
@@ -80,9 +80,30 @@ func (r offerRepository) Delete(id uint64) error {
 	return r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
 }
 
+func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error) {
+	var data []offer
+	query := r.coll.Find(db.Cond{"status": true, "deleted_date": nil, "farm_id": farmId})
+	res := query.Paginate(uint(p.CountPerPage))
+	err := res.Page(uint(p.Page)).All(&data)
+	if err != nil {
+		return domain.Offers{}, err
+	}
+
+	offers := r.mapModelToDomainPagination(data)
+	totalCount, err := res.TotalEntries()
+	if err != nil {
+		return domain.Offers{}, err
+	}
+
+	offers.Total = totalCount
+	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
+
+	return offers, nil
+}
+
 func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
 	var data []offer
-	query := r.coll.Find(db.Cond{"status": true})
+	query := r.coll.Find(db.Cond{"status": true, "deleted_date": nil})
 	if user.Id != 0 {
 		query = query.And(db.Cond{"user_id": user.Id})
 	}
@@ -93,7 +114,6 @@ func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.
 	}
 
 	offers := r.mapModelToDomainPagination(data)
-
 	totalCount, err := res.TotalEntries()
 	if err != nil {
 		return domain.Offers{}, err
@@ -103,6 +123,19 @@ func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.
 	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
 
 	return offers, nil
+}
+
+func (r offerRepository) FindByCategory(category string) ([]domain.Offer, error) {
+	var data []offer
+	query := r.coll.Find(db.Cond{"status": true, "deleted_date": nil})
+	if category != "" {
+		query = query.And(db.Cond{"category": category})
+	}
+	err := query.All(&data)
+	if err != nil {
+		return []domain.Offer{}, err
+	}
+	return r.mapModelToDomainMass(data), nil
 }
 
 func (r offerRepository) mapDomainToModel(d domain.Offer) offer {
@@ -125,11 +158,6 @@ func (r offerRepository) mapDomainToModel(d domain.Offer) offer {
 }
 
 func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
-	farm, err := r.farmRepo.FindById(o.FarmId)
-
-	if err != nil {
-		return domain.Offer{}
-	}
 
 	return domain.Offer{
 		Id:          o.Id,
@@ -141,7 +169,7 @@ func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
 		Stock:       o.Stock,
 		Cover:       domain.Image{Name: o.Cover},
 		Status:      o.Status,
-		Farm:        farm,
+		Farm:        domain.Farm{Id: o.FarmId},
 		UserId:      o.UserId,
 		CreatedDate: o.CreatedDate,
 		UpdatedDate: o.UpdatedDate,
@@ -149,10 +177,15 @@ func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
 	}
 }
 
-func (f offerRepository) mapModelToDomainPagination(offers []offer) domain.Offers {
+func (f offerRepository) mapModelToDomainMass(offers []offer) []domain.Offer {
 	newOffers := make([]domain.Offer, len(offers))
 	for i, offer := range offers {
 		newOffers[i] = f.mapModelToDomain(offer)
 	}
-	return domain.Offers{Items: newOffers}
+
+	return newOffers
+}
+
+func (f offerRepository) mapModelToDomainPagination(offers []offer) domain.Offers {
+	return domain.Offers{Items: f.mapModelToDomainMass(offers)}
 }

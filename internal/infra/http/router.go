@@ -55,9 +55,13 @@ func Router(cont container.Container) http.Handler {
 				UserRouter(apiRouter, cont.UserController)
 				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
 				OfferRouter(apiRouter, cont.OfferController, cont.OfferService)
+				OrderRouter(apiRouter, cont.OrderController, cont.OrderService)
+				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
 				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
+
+				AddressRouter(apiRouter, cont.AddressController, cont.AddressService)
 			})
 		})
 	})
@@ -74,11 +78,90 @@ func Router(cont container.Container) http.Handler {
 	return router
 }
 
+func OrderItemRoute(r chi.Router, oc controllers.OrderItemController, os app.OrderService, o app.OrderItemsService) {
+	pathObjectMiddleware := middlewares.PathObject("orderId", controllers.OrderKey, os)
+	pathObjectItemMiddleware := middlewares.PathObject("orderItemId", controllers.OrderItemKey, o)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Order](controllers.OrderKey)
+	isOwnerMiddlewareOrderItems := middlewares.IsOwnerMiddleware[domain.OrderItem](controllers.OrderItemKey)
+
+	r.Route("/order-items", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Post(
+			"/{orderId}",
+			oc.AddItem(),
+		)
+		apiRouter.With(pathObjectItemMiddleware, isOwnerMiddlewareOrderItems).Put(
+			"/{orderItemId}",
+			oc.Update(),
+		)
+		apiRouter.With(pathObjectItemMiddleware, isOwnerMiddlewareOrderItems).Delete(
+			"/{orderItemId}",
+			oc.Delete(),
+		)
+	})
+}
+
+func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderService) {
+	pathObjectMiddleware := middlewares.PathObject("orderId", controllers.OrderKey, os)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Order](controllers.OrderKey)
+
+	r.Route("/orders", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{orderId}",
+			oc.FindById(),
+		)
+		apiRouter.Get(
+			"/",
+			oc.FindAllByUserId(),
+		)
+		apiRouter.Post(
+			"/",
+			oc.Save(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{orderId}",
+			oc.Update(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{orderId}",
+			oc.Delete(),
+		)
+	})
+}
+
 func CategoryRouter(r chi.Router, categoryController controllers.CategoryController) {
 	r.Route("/categories", func(apiRouter chi.Router) {
 		apiRouter.Get(
 			"/",
 			categoryController.FindAll(),
+		)
+	})
+}
+
+func AddressRouter(r chi.Router, uc controllers.AddressController, as app.AddressService) {
+
+	pathObjectMiddleware := middlewares.PathObject("addressId", controllers.AddressKey, as)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Address](controllers.AddressKey)
+
+	r.Route("/address", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			uc.FindAll(),
+		)
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{addressId}",
+			uc.Read(),
+		)
+		apiRouter.Post(
+			"/",
+			uc.Create(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{addressId}",
+			uc.Update(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{addressId}",
+			uc.Delete(),
 		)
 	})
 }
@@ -91,6 +174,10 @@ func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService)
 		apiRouter.Get(
 			"/",
 			uc.ListView(),
+		)
+		apiRouter.Post(
+			"/get-by-coords",
+			uc.FindAllByCoords(),
 		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{farmId}",
@@ -124,6 +211,10 @@ func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferServi
 		apiRouter.Get(
 			"/",
 			oc.ListView(),
+		)
+		apiRouter.Get(
+			"/by-farmid/{farmId}",
+			oc.FindByFarmId(),
 		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{offerId}",

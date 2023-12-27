@@ -15,6 +15,7 @@ type OfferService interface {
 	Delete(offer domain.Offer) error
 	Find(uint64) (interface{}, error)
 	FindAll(user domain.User, p domain.Pagination) (domain.Offers, error)
+	FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error)
 }
 
 func NewOfferService(or database.OfferRepository, fs filesystem.ImageStorageService) OfferService {
@@ -40,14 +41,12 @@ func (s offerService) Find(id uint64) (interface{}, error) {
 
 func (s offerService) Save(offer domain.Offer) (domain.Offer, error) {
 	decodedBytes, err := base64.StdEncoding.DecodeString(offer.Cover.Data)
-
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
 	}
 
 	err = s.imageService.SaveImage(offer.Cover.Name, decodedBytes)
-
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
@@ -70,7 +69,6 @@ func (s offerService) Save(offer domain.Offer) (domain.Offer, error) {
 
 func (os offerService) FindById(id uint64) (domain.Offer, error) {
 	offer, err := os.offerRepo.FindById(id)
-
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
@@ -79,9 +77,18 @@ func (os offerService) FindById(id uint64) (domain.Offer, error) {
 	return offer, err
 }
 
+func (s offerService) FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error) {
+	offers, err := s.offerRepo.FindAllByFarmId(farmId, p)
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+		return domain.Offers{}, err
+	}
+
+	return offers, nil
+}
+
 func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, error) {
 	decodedBytes, err := base64.StdEncoding.DecodeString(req.Cover.Data)
-
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
@@ -113,12 +120,10 @@ func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, 
 
 func (s offerService) Delete(offer domain.Offer) error {
 	err := s.imageService.RemoveImage(offer.Cover.Name)
-
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return err
 	}
-
 	err = s.offerRepo.Delete(offer.Id)
 	if err != nil {
 		log.Printf("OfferService: %s", err)

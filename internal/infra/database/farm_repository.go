@@ -27,17 +27,20 @@ type FarmRepository interface {
 	Save(farm domain.Farm) (domain.Farm, error)
 	FindById(id uint64) (domain.Farm, error)
 	Update(farm domain.Farm) (domain.Farm, error)
+	FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error)
 	FindAll(pag domain.Pagination) (domain.Farms, error)
 	Delete(id uint64) error
 }
 
 type farmRepository struct {
-	coll db.Collection
+	coll      db.Collection
+	offerRepo OfferRepository
 }
 
-func NewFarmRepository(dbSession db.Session) FarmRepository {
+func NewFarmRepository(dbSession db.Session, offerR OfferRepository) FarmRepository {
 	return farmRepository{
-		coll: dbSession.Collection(FarmsTableName),
+		coll:      dbSession.Collection(FarmsTableName),
+		offerRepo: offerR,
 	}
 }
 
@@ -53,7 +56,7 @@ func (r farmRepository) Save(farm domain.Farm) (domain.Farm, error) {
 
 func (r farmRepository) FindById(id uint64) (domain.Farm, error) {
 	var f farm
-	err := r.coll.Find(db.Cond{"id": id}).One(&f)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&f)
 	if err != nil {
 		return domain.Farm{}, err
 	}
@@ -76,7 +79,7 @@ func (r farmRepository) Delete(id uint64) error {
 
 func (r farmRepository) FindAll(p domain.Pagination) (domain.Farms, error) {
 	var data []farm
-	query := r.coll.Find(db.Cond{})
+	query := r.coll.Find(db.Cond{"deleted_date": nil})
 
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
@@ -94,6 +97,41 @@ func (r farmRepository) FindAll(p domain.Pagination) (domain.Farms, error) {
 	farms.Total = totalCount
 	farms.Pages = uint(math.Ceil(float64(farms.Total) / float64(p.CountPerPage)))
 
+	return farms, nil
+}
+
+func (r farmRepository) FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error) {
+	var data []farm
+	offers, err := r.offerRepo.FindByCategory(points.Category)
+	if err != nil {
+		return domain.Farms{}, err
+	}
+
+	ids := make([]uint64, len(offers))
+	for i, item := range offers {
+		ids[i] = item.Farm.Id
+	}
+
+	query := r.coll.Find(db.Cond{"deleted_date": nil,
+		"id IN":       ids,
+		"latitude >":  points.UpperLeftPoint.Lat,
+		"latitude <":  points.BottomRightPoint.Lat,
+		"longitude >": points.UpperLeftPoint.Lng,
+		"longitude <": points.BottomRightPoint.Lng})
+	res := query.Paginate(uint(p.CountPerPage))
+	err = res.Page(uint(p.Page)).All(&data)
+	if err != nil {
+		return domain.Farms{}, err
+	}
+
+	farms := r.mapModelToDomainPagination(data)
+	totalCount, err := res.TotalEntries()
+	if err != nil {
+		return domain.Farms{}, err
+	}
+
+	farms.Total = totalCount
+	farms.Pages = uint(math.Ceil(float64(farms.Total) / float64(p.CountPerPage)))
 	return farms, nil
 }
 

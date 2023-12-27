@@ -2,6 +2,7 @@ package resources
 
 import (
 	"boilerplate/internal/domain"
+	"math"
 )
 
 type OfferDto struct {
@@ -30,7 +31,7 @@ func (d OfferDto) DomainToDto(offer domain.Offer) OfferDto {
 		Title:       offer.Title,
 		Description: offer.Description,
 		Category:    offer.Category,
-		Price:       offer.Price,
+		Price:       math.Round(offer.Price*100) / 100,
 		Unit:        offer.Unit,
 		Stock:       offer.Stock,
 		Cover:       offer.Cover.Name,

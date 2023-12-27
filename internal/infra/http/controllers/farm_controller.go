@@ -21,12 +21,37 @@ func NewFarmController(fr app.FarmService, us app.UserService) FarmController {
 	}
 }
 
+func (c FarmController) FindAllByCoords() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		pagination, err := requests.DecodePaginationQuery(r)
+		if err != nil {
+			log.Printf("FarmController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		req, err := requests.Bind(r, requests.PointsRequest{}, domain.Points{})
+		if err != nil {
+			log.Printf("FarmController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		farms, err := c.farmService.FindAllByCoords(req, pagination)
+		if err != nil {
+			log.Printf("FarmController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, c.userService))
+	}
+}
+
 func (c FarmController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
 		farm, err := requests.Bind(r, requests.FarmRequest{}, domain.Farm{})
 		farm.UserId = u.Id
-
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			BadRequest(w, err)
@@ -34,7 +59,6 @@ func (c FarmController) Save() http.HandlerFunc {
 		}
 
 		farm, err = c.farmService.Save(farm)
-
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			BadRequest(w, err)
@@ -56,7 +80,6 @@ func (c FarmController) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(FarmKey).(domain.Farm)
 		farm, err := requests.Bind(r, requests.FarmRequest{}, domain.Farm{})
-
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			InternalServerError(w, err)
@@ -66,7 +89,6 @@ func (c FarmController) Update() http.HandlerFunc {
 		farm.Id = f.Id
 		farm.UserId = f.UserId
 		newfarm, err := c.farmService.Update(farm, farm)
-
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			InternalServerError(w, err)
@@ -80,9 +102,7 @@ func (c FarmController) Update() http.HandlerFunc {
 func (c FarmController) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(FarmKey).(domain.Farm)
-
 		err := c.farmService.Delete(f.Id)
-
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			InternalServerError(w, err)
@@ -96,7 +116,6 @@ func (c FarmController) Delete() http.HandlerFunc {
 func (c FarmController) ListView() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pagination, err := requests.DecodePaginationQuery(r)
-
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			InternalServerError(w, err)
@@ -110,6 +129,6 @@ func (c FarmController) ListView() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, pagination, c.userService))
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, c.userService))
 	}
 }

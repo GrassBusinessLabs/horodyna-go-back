@@ -21,11 +21,14 @@ type Userable interface {
 }
 
 var (
-	UserKey  = CtxKey{name: "user"}
-	SessKey  = CtxKey{name: "sess"}
-	FarmKey  = CtxKey{name: "farmId"}
-	OfferKey = CtxKey{name: "offerId"}
-	ImageKey = CtxKey{name: "imageId"}
+	UserKey      = CtxKey{name: "user"}
+	SessKey      = CtxKey{name: "sess"}
+	FarmKey      = CtxKey{name: "farmId"}
+	OfferKey     = CtxKey{name: "offerId"}
+	OrderKey     = CtxKey{name: "orderId"}
+	OrderItemKey = CtxKey{name: "orderItemId"}
+	AddressKey   = CtxKey{name: "address"}
+	ImageKey     = CtxKey{name: "imageId"}
 )
 
 func GetUserKey() CtxKey {
