@@ -13,6 +13,7 @@ type FarmService interface {
 	Delete(id uint64) error
 	Find(uint64) (interface{}, error)
 	FindAll(p domain.Pagination) (domain.Farms, error)
+	FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error)
 }
 
 func NewFarmService(fr database.FarmRepository) FarmService {
@@ -83,5 +84,14 @@ func (s farmService) FindAll(p domain.Pagination) (domain.Farms, error) {
 		return domain.Farms{}, err
 	}
 
+	return farms, nil
+}
+
+func (s farmService) FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error) {
+	farms, err := s.farmRepo.FindAllByCoords(points, p)
+	if err != nil {
+		log.Printf("FarmService: %s", err)
+		return domain.Farms{}, err
+	}
 	return farms, nil
 }

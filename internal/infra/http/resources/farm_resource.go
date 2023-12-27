@@ -39,7 +39,7 @@ func (d FarmDto) DomainToDto(farm domain.Farm, us app.UserService) FarmDto {
 	}
 }
 
-func (d FarmDto) DomainToDtoPaginatedCollection(farms domain.Farms, pag domain.Pagination, us app.UserService) FarmsDto {
+func (d FarmDto) DomainToDtoPaginatedCollection(farms domain.Farms, us app.UserService) FarmsDto {
 	result := make([]FarmDto, len(farms.Items))
 
 	for i := range farms.Items {

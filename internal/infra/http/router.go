@@ -174,6 +174,10 @@ func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService)
 			"/",
 			uc.ListView(),
 		)
+		apiRouter.Post(
+			"/get-by-coords",
+			uc.FindAllByCoords(),
+		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{farmId}",
 			uc.FindById(),
@@ -206,6 +210,10 @@ func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferServi
 		apiRouter.Get(
 			"/",
 			oc.ListView(),
+		)
+		apiRouter.Get(
+			"/by-farmid/{farmId}",
+			oc.FindByFarmId(),
 		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{offerId}",

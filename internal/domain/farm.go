@@ -4,6 +4,17 @@ import (
 	"time"
 )
 
+type Point struct {
+	Lat float64
+	Lng float64
+}
+
+type Points struct {
+	UpperLeftPoint   Point
+	BottomRightPoint Point
+	Category         string
+}
+
 type Farm struct {
 	Id          uint64
 	Name        string

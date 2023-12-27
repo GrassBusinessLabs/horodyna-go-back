@@ -54,7 +54,7 @@ func (r addressRepository) Create(address domain.Address) (domain.Address, error
 
 func (r addressRepository) Read(id uint64) (domain.Address, error) {
 	var a address
-	err := r.coll.Find(db.Cond{"id": id}).One(&a)
+	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&a)
 	if err != nil {
 		return domain.Address{}, err
 	}
@@ -64,7 +64,7 @@ func (r addressRepository) Read(id uint64) (domain.Address, error) {
 func (r addressRepository) Update(address domain.Address) (domain.Address, error) {
 	a := r.mapDomainToModel(address)
 	a.UpdatedDate = time.Now()
-	err := r.coll.Find(db.Cond{"id": address.ID}).Update(a)
+	err := r.coll.Find(db.Cond{"id": address.ID, "deleted_date": nil}).Update(a)
 	if err != nil {
 		return domain.Address{}, err
 	}
@@ -77,7 +77,7 @@ func (r addressRepository) Delete(id uint64) error {
 
 func (r addressRepository) FindAll(p domain.Pagination) (domain.Addresses, error) {
 	var data []address
-	query := r.coll.Find(db.Cond{})
+	query := r.coll.Find(db.Cond{"deleted_date": nil})
 
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)

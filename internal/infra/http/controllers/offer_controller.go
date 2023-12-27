@@ -8,6 +8,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type OfferController struct {
@@ -56,6 +59,32 @@ func (c OfferController) Save() http.HandlerFunc {
 		}
 
 		Created(w, resources.OfferDto{}.DomainToDto(offer))
+	}
+}
+
+func (c OfferController) FindByFarmId() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		farmId, err := strconv.ParseUint(chi.URLParam(r, "farmId"), 10, 64)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		pagination, err := requests.DecodePaginationQuery(r)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		offers, err := c.offerService.FindAllByFarmId(farmId, pagination)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers))
 	}
 }
 
