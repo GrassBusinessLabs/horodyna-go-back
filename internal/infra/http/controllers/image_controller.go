@@ -27,7 +27,6 @@ func (c ImageModelController) Save() http.HandlerFunc {
 			BadRequest(w, err)
 			return
 		}
-		log.Println(imageM.EntityId)
 
 		imageM, err = c.imageModelService.Save(imageM)
 		if err != nil {

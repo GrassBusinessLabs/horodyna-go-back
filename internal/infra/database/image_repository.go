@@ -2,7 +2,7 @@ package database
 
 import (
 	"boilerplate/internal/domain"
-	"time"
+	"fmt"
 
 	"github.com/upper/db/v4"
 )
@@ -10,13 +10,10 @@ import (
 const ImageTableName = "images"
 
 type image struct {
-	Id          uint64     `db:"id,omitempty"`
-	Name        string     `db:"title"`
-	Entity      string     `db:"entity"`
-	EntityId    uint64     `db:"entity_id"`
-	CreatedDate time.Time  `db:"created_date,omitempty"`
-	UpdatedDate time.Time  `db:"updated_date,omitempty"`
-	DeletedDate *time.Time `db:"deleted_date,omitempty"`
+	Id       uint64 `db:"id,omitempty"`
+	Name     string `db:"title"`
+	Entity   string `db:"entity"`
+	EntityId uint64 `db:"entity_id"`
 }
 
 type ImageRepository interface {
@@ -38,7 +35,6 @@ func NewImageModelRepository(dbSession db.Session) ImageRepository {
 
 func (r imageRepository) Save(imageM domain.Image) (domain.Image, error) {
 	i := r.mapDomainToModel(imageM)
-	i.CreatedDate, i.UpdatedDate = time.Now(), time.Now()
 	err := r.coll.InsertReturning(&i)
 	if err != nil {
 		return domain.Image{}, err
@@ -57,7 +53,13 @@ func (r imageRepository) FindById(id uint64) (domain.Image, error) {
 }
 
 func (r imageRepository) Delete(id uint64) error {
-	return r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).Update(map[string]interface{}{"deleted_date": time.Now()})
+	res := r.coll.Find(db.Cond{"id": id, "deleted_date": nil})
+
+	err := res.Delete()
+	if err != nil {
+		return fmt.Errorf("error delete: %v", err)
+	}
+	return nil
 }
 
 func (r imageRepository) mapDomainToModel(d domain.Image) image {
