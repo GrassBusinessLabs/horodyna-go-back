@@ -2,8 +2,9 @@ package database
 
 import (
 	"boilerplate/internal/domain"
-	"github.com/upper/db/v4"
 	"time"
+
+	"github.com/upper/db/v4"
 )
 
 const UsersTableName = "users"

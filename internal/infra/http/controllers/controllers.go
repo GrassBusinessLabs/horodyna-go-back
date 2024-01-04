@@ -28,6 +28,7 @@ var (
 	OrderKey     = CtxKey{name: "orderId"}
 	OrderItemKey = CtxKey{name: "orderItemId"}
 	AddressKey   = CtxKey{name: "address"}
+	ImageKey     = CtxKey{name: "imageId"}
 )
 
 func GetUserKey() CtxKey {

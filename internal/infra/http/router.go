@@ -57,6 +57,7 @@ func Router(cont container.Container) http.Handler {
 				OfferRouter(apiRouter, cont.OfferController, cont.OfferService)
 				OrderRouter(apiRouter, cont.OrderController, cont.OrderService)
 				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
+				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 
@@ -266,6 +267,26 @@ func UserRouter(r chi.Router, uc controllers.UserController) {
 			uc.Delete(),
 		)
 	})
+}
+
+func ImageRouter(r chi.Router, ic controllers.ImageModelController, is app.ImageModelService) {
+	pathObjectMiddleware := middlewares.PathObject("imageId", controllers.ImageKey, is)
+	r.Route("/images", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{imageId}",
+			ic.FindById(),
+		)
+		apiRouter.Post(
+			"/",
+			ic.Save(),
+		)
+
+		apiRouter.With(pathObjectMiddleware).Delete(
+			"/{imageId}",
+			ic.Delete(),
+		)
+	})
+
 }
 
 func NotFoundJSON() http.HandlerFunc {
