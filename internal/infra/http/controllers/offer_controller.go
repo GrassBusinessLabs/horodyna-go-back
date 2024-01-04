@@ -105,6 +105,11 @@ func (c OfferController) ListView() http.HandlerFunc {
 			return
 		}
 
+		countStr := r.URL.Query().Get("all")
+		if countStr == "true" {
+			u.Id = 0
+		}
+
 		offers, err := c.offerService.FindAll(u, pagination)
 		if err != nil {
 			log.Printf("OfferController: %s", err)
