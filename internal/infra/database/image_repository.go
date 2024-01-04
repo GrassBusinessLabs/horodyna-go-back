@@ -53,9 +53,7 @@ func (r imageRepository) FindById(id uint64) (domain.Image, error) {
 }
 
 func (r imageRepository) Delete(id uint64) error {
-	res := r.coll.Find(db.Cond{"id": id, "deleted_date": nil})
-
-	err := res.Delete()
+	err := r.coll.Find(db.Cond{"id": id}).Delete()
 	if err != nil {
 		return fmt.Errorf("error delete: %v", err)
 	}
