@@ -103,12 +103,13 @@ func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (do
 
 func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
 	var data []offer
-	query := r.coll.Find(db.Cond{"status": true, "deleted_date": nil})
+	query := r.coll.Find(db.Cond{"deleted_date": nil})
 	if user.Id != 0 {
 		query = query.And(db.Cond{"user_id": user.Id})
 	}
+
 	res := query.Paginate(uint(p.CountPerPage))
-	err := res.Page(uint(p.Page)).All(&data)
+	err := res.Page(uint(p.Page)).OrderBy("-status").All(&data)
 	if err != nil {
 		return domain.Offers{}, err
 	}

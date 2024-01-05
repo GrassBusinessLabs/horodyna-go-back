@@ -5,15 +5,20 @@ import (
 	"bytes"
 	stdimg "image"
 	"image/jpeg"
+	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path"
+	"strconv"
+	"strings"
+	"time"
 
 	"golang.org/x/image/draw"
 )
 
 type ImageStorageService interface {
-	SaveImage(filename string, content []byte) error
+	SaveImage(filename string, content []byte) (string, error)
 	RemoveImage(filename string) error
 }
 
@@ -27,12 +32,17 @@ func NewImageStorageService(location string) ImageStorageService {
 	}
 }
 
-func (s imageStorageService) SaveImage(filename string, content []byte) error {
-	location := path.Join(s.loc, filename)
-	err := writeFileToStorage(location, content)
+func (s imageStorageService) SaveImage(filename string, content []byte) (string, error) {
+	name, err := FileExists(s.loc, filename, content)
+	if err != nil {
+		return "", err
+	}
+
+	location := path.Join(s.loc, name)
+	err = writeFileToStorage(location, content)
 	if err != nil {
 		log.Print(err)
-		return err
+		return "", err
 	}
 
 	/*
@@ -49,7 +59,7 @@ func (s imageStorageService) SaveImage(filename string, content []byte) error {
 		}
 	*/
 
-	return nil
+	return name, nil
 }
 
 func (s imageStorageService) RemoveImage(filename string) error {
@@ -61,6 +71,35 @@ func (s imageStorageService) RemoveImage(filename string) error {
 	}
 
 	return nil
+}
+
+func FileExists(loc string, name string, file []byte) (string, error) {
+	location := path.Join(loc, name)
+	file_cont, err := ioutil.ReadFile(location)
+	if err != nil {
+		return name, nil
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	if AreBytesEqual(file_cont, file) {
+		num := strconv.FormatUint(rand.Uint64(), 10)
+		splited := strings.Split(name, ".")
+		return FileExists(loc, splited[0]+"_"+num+"."+splited[1], file)
+	}
+
+	return name, nil
+}
+
+func AreBytesEqual(b1, b2 []byte) bool {
+	if len(b1) != len(b2) {
+		return false
+	}
+	for i := range b1 {
+		if b1[i] != b2[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // nolint
