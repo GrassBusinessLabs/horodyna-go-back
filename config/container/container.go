@@ -34,6 +34,7 @@ type Services struct {
 	app.OrderService
 	app.OrderItemsService
 	app.AddressService
+	app.ImageModelService
 }
 
 type Controllers struct {
@@ -45,6 +46,7 @@ type Controllers struct {
 	controllers.OrderController
 	controllers.OrderItemController
 	controllers.AddressController
+	controllers.ImageModelController
 }
 
 func New(conf config.Configuration) Container {
@@ -58,13 +60,15 @@ func New(conf config.Configuration) Container {
 	orderItemRepository := database.NewOrderItemRepository(sess, offerRepository)
 	orderRepository := database.NewOrderRepository(sess, orderItemRepository)
 	addressRepository := database.NewAddressepository(sess)
+	ImageRepository := database.NewImageModelRepository(sess)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
 	farmService := app.NewFarmService(farmRepository)
 	catService := app.NewCategoryService()
-	imageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
-	offerService := app.NewOfferService(offerRepository, imageService)
+	imageStorageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
+	offerService := app.NewOfferService(offerRepository, imageStorageService)
+	imageService := app.NewImageModelService(ImageRepository, imageStorageService)
 	orderService := app.NewOrderService(orderRepository)
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
 	addressService := app.NewAddressService(addressRepository)
@@ -77,6 +81,7 @@ func New(conf config.Configuration) Container {
 	orderController := controllers.NewOrderController(orderService)
 	orderItemController := controllers.NewOrderItemController(orderItemService)
 	addressController := controllers.NewAddressController(addressService, userService)
+	imageController := controllers.NewImageModelController(imageService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -93,6 +98,7 @@ func New(conf config.Configuration) Container {
 			orderService,
 			orderItemService,
 			addressService,
+			imageService,
 		},
 		Controllers: Controllers{
 			authController,
@@ -103,6 +109,7 @@ func New(conf config.Configuration) Container {
 			orderController,
 			orderItemController,
 			addressController,
+			imageController,
 		},
 	}
 }

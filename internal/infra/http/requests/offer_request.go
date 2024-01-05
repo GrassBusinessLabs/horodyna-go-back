@@ -5,8 +5,10 @@ import (
 )
 
 type ImageRequest struct {
-	Name string `json:"name" validate:"required"`
-	Data string `json:"data" validate:"required"`
+	Name     string `json:"name" validate:"required"`
+	Data     string `json:"data" validate:"required"`
+	Entity   string `json:"entity"`
+	EntityId uint64 `json:"entity_id"`
 }
 
 type OfferRequest struct {
@@ -21,17 +23,26 @@ type OfferRequest struct {
 	Cover       *ImageRequest `json:"image"`
 }
 
-func (m ImageRequest) ToDomainModel() domain.Image {
+func (m ImageRequest) ToDomainModelWithoutInt() domain.Image {
 	return domain.Image{
 		Name: m.Name,
 		Data: m.Data,
 	}
 }
 
+func (m ImageRequest) ToDomainModel() (interface{}, error) {
+	return domain.Image{
+		Entity:   m.Entity,
+		EntityId: m.EntityId,
+		Name:     m.Name,
+		Data:     m.Data,
+	}, nil
+}
+
 func (m OfferRequest) ToDomainModel() (interface{}, error) {
 	var img domain.Image
 	if m.Cover != nil {
-		img = m.Cover.ToDomainModel()
+		img = m.Cover.ToDomainModelWithoutInt()
 	}
 
 	return domain.Offer{
