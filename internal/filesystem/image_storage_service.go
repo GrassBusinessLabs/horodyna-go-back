@@ -81,7 +81,7 @@ func FileExists(loc string, name string, file []byte) (string, error) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	if AreBytesEqual(file_cont, file) {
+	if !AreBytesEqual(file_cont, file) {
 		num := strconv.FormatUint(rand.Uint64(), 10)
 		splited := strings.Split(name, ".")
 		return FileExists(loc, splited[0]+"_"+num+"."+splited[1], file)

@@ -34,12 +34,13 @@ func (s imageModelService) Save(image domain.Image) (domain.Image, error) {
 		return domain.Image{}, err
 	}
 
-	err = s.imageServ.SaveImage(image.Name, decodedBytes)
+	name, err := s.imageServ.SaveImage(image.Name, decodedBytes)
 	if err != nil {
 		log.Printf("ImageModelService: %s", err)
 		return domain.Image{}, err
 	}
 
+	image.Name = name
 	savedim, err := s.imageMRepo.Save(image)
 	if err != nil {
 		log.Printf("ImageModelService: %s", err)
