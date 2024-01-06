@@ -83,19 +83,14 @@ func (s offerService) FindAllByFarmId(farmId uint64, p domain.Pagination) (domai
 }
 
 func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, error) {
-	if req.Cover.Name != off.Cover.Name && req.Cover.Name != "" {
+	if req.Cover.Name != "" {
 		decodedBytes, err := base64.StdEncoding.DecodeString(req.Cover.Data)
 		if err != nil {
 			log.Printf("OfferService: %s", err)
 			return domain.Offer{}, err
 		}
 
-		err = s.imageService.RemoveImage(off.Cover.Name)
-		if err != nil {
-			log.Printf("OfferService: %s", err)
-		}
-
-		name, err := s.imageService.SaveImage(req.Cover.Name, decodedBytes)
+		name, err := s.imageService.UpdateImage(off.Cover.Name, req.Cover.Name, decodedBytes)
 		if err != nil {
 			log.Printf("OfferService: %s", err)
 			return domain.Offer{}, err

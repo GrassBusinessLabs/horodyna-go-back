@@ -5,8 +5,10 @@ import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/http/requests"
 	"boilerplate/internal/infra/http/resources"
+	"errors"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 type ImageModelController struct {
@@ -16,6 +18,34 @@ type ImageModelController struct {
 func NewImageModelController(ir app.ImageModelService) ImageModelController {
 	return ImageModelController{
 		imageModelService: ir,
+	}
+}
+
+func (c ImageModelController) FindAll() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		entityStr := r.URL.Query().Get("entity")
+		if entityStr == "" {
+			BadRequest(w, errors.New("Parameter entity is required!"))
+			return
+		}
+		idStr := r.URL.Query().Get("id")
+		if idStr == "" {
+			BadRequest(w, errors.New("Parameter id is required!"))
+			return
+		}
+		id, err := strconv.ParseUint(idStr, 10, 64)
+		if err != nil {
+			InternalServerError(w, err)
+			return
+		}
+
+		images, err := c.imageModelService.FindAll(entityStr, id)
+		if err != nil {
+			InternalServerError(w, err)
+			return
+		}
+
+		Created(w, resources.ImageMDto{}.DomainToDtoMass(images))
 	}
 }
 

@@ -17,6 +17,7 @@ type image struct {
 }
 
 type ImageRepository interface {
+	FindAll(entity string, id uint64) ([]domain.Image, error)
 	Save(user domain.Image) (domain.Image, error)
 	FindById(id uint64) (domain.Image, error)
 	Delete(id uint64) error
@@ -30,7 +31,6 @@ func NewImageModelRepository(dbSession db.Session) ImageRepository {
 	return imageRepository{
 		coll: dbSession.Collection(ImageTableName),
 	}
-
 }
 
 func (r imageRepository) Save(imageM domain.Image) (domain.Image, error) {
@@ -40,6 +40,20 @@ func (r imageRepository) Save(imageM domain.Image) (domain.Image, error) {
 		return domain.Image{}, err
 	}
 	return r.mapModelToDomain(i), nil
+}
+
+func (r imageRepository) FindAll(entity string, id uint64) ([]domain.Image, error) {
+	var imgs []image
+	err := r.coll.Find(db.Cond{"entity": entity, "entity_id": id}).All(&imgs)
+	if err != nil {
+		return []domain.Image{}, err
+	}
+
+	domainImages := make([]domain.Image, len(imgs))
+	for i, item := range imgs {
+		domainImages[i] = r.mapModelToDomain(item)
+	}
+	return domainImages, nil
 }
 
 func (r imageRepository) FindById(id uint64) (domain.Image, error) {

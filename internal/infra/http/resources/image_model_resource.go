@@ -3,22 +3,29 @@ package resources
 import "boilerplate/internal/domain"
 
 type ImageMDto struct {
+	Id       uint64 `json:"id"`
 	Name     string `json:"name"`
-	Data     string `json:"data"`
 	Entity   string `json:"entity"`
 	EntityId uint64 `json:"entity_id"`
 }
 
 type ImagesMDto struct {
-	Items []ImageMDto `json:"items"`
-	Total uint64      `json:"total"`
-	Pages uint        `json:"pages"`
+	Items []ImageMDto `json:"data"`
+}
+
+func (d ImageMDto) DomainToDtoMass(images []domain.Image) ImagesMDto {
+	imgsDto := make([]ImageMDto, len(images))
+	for i, item := range images {
+		imgsDto[i] = ImageMDto{}.DomainToDto(item)
+	}
+
+	return ImagesMDto{Items: imgsDto}
 }
 
 func (d ImageMDto) DomainToDto(imageM domain.Image) ImageMDto {
 	return ImageMDto{
+		Id:       imageM.Id,
 		Name:     imageM.Name,
-		Data:     imageM.Data,
 		Entity:   imageM.Entity,
 		EntityId: imageM.EntityId,
 	}

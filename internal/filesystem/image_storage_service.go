@@ -5,7 +5,7 @@ import (
 	"bytes"
 	stdimg "image"
 	"image/jpeg"
-	"io/ioutil"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -20,6 +20,7 @@ import (
 type ImageStorageService interface {
 	SaveImage(filename string, content []byte) (string, error)
 	RemoveImage(filename string) error
+	UpdateImage(oldfilename string, filename string, content []byte) (string, error)
 }
 
 type imageStorageService struct {
@@ -33,7 +34,7 @@ func NewImageStorageService(location string) ImageStorageService {
 }
 
 func (s imageStorageService) SaveImage(filename string, content []byte) (string, error) {
-	name, err := FileExists(s.loc, filename, content)
+	name, err := GenerateFileName(s.loc, filename)
 	if err != nil {
 		return "", err
 	}
@@ -62,6 +63,42 @@ func (s imageStorageService) SaveImage(filename string, content []byte) (string,
 	return name, nil
 }
 
+func (s imageStorageService) UpdateImage(oldfilename string, filename string, content []byte) (string, error) {
+	location := path.Join(s.loc, oldfilename)
+	filer, err := os.Open(location)
+	if err != nil {
+		return "", err
+	}
+	file_content, err := io.ReadAll(filer)
+	if err != nil {
+		return "", err
+	}
+	filer.Close()
+
+	if AreBytesEqual(content, file_content) {
+		return oldfilename, nil
+	}
+
+	err = s.RemoveImage(oldfilename)
+	if err != nil {
+		return "", err
+	}
+
+	name, err := GenerateFileName(s.loc, filename)
+	if err != nil {
+		return "", err
+	}
+
+	location = path.Join(s.loc, name)
+	err = writeFileToStorage(location, content)
+	if err != nil {
+		log.Print(err)
+		return "", err
+	}
+
+	return name, nil
+}
+
 func (s imageStorageService) RemoveImage(filename string) error {
 	location := path.Join(s.loc, filename)
 	err := os.Remove(location)
@@ -73,18 +110,15 @@ func (s imageStorageService) RemoveImage(filename string) error {
 	return nil
 }
 
-func FileExists(loc string, name string, file []byte) (string, error) {
+func GenerateFileName(loc string, name string) (string, error) {
 	location := path.Join(loc, name)
-	file_cont, err := ioutil.ReadFile(location)
-	if err != nil {
-		return name, nil
-	}
-
-	rand.Seed(time.Now().UnixNano())
-	if !AreBytesEqual(file_cont, file) {
-		num := strconv.FormatUint(rand.Uint64(), 10)
+	_, err := os.Stat(location)
+	if !os.IsNotExist(err) {
+		source := rand.NewSource(time.Now().UnixNano())
+		rng := rand.New(source)
+		num := strconv.FormatUint(rng.Uint64(), 10)
 		splited := strings.Split(name, ".")
-		return FileExists(loc, splited[0]+"_"+num+"."+splited[1], file)
+		return GenerateFileName(loc, splited[0]+"_"+num+"."+splited[1])
 	}
 
 	return name, nil
