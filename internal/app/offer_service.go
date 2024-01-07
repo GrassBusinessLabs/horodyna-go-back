@@ -101,7 +101,7 @@ func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, 
 	}
 
 	req.Id = off.Id
-	req.UserId = off.UserId
+	req.User.Id = off.User.Id
 	offer, err := s.offerRepo.Update(req)
 	if err != nil {
 		log.Printf("OfferService: %s", err)

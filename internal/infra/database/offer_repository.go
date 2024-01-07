@@ -38,12 +38,14 @@ type OfferRepository interface {
 }
 
 type offerRepository struct {
-	coll db.Collection
+	coll     db.Collection
+	collUser db.Collection
 }
 
 func NewOfferRepository(dbSession db.Session) OfferRepository {
 	return offerRepository{
-		coll: dbSession.Collection(OffersTableName),
+		coll:     dbSession.Collection(OffersTableName),
+		collUser: dbSession.Collection(UsersTableName),
 	}
 }
 
@@ -63,7 +65,15 @@ func (r offerRepository) FindById(id uint64) (domain.Offer, error) {
 	if err != nil {
 		return domain.Offer{}, err
 	}
-	return r.mapModelToDomain(o), nil
+
+	user, err := r.GetUserForOffer(o.UserId)
+	if err != nil {
+		return domain.Offer{}, err
+	}
+	offer := r.mapModelToDomain(o)
+	offer.User = user
+
+	return offer, nil
 }
 
 func (or offerRepository) Update(offer domain.Offer) (domain.Offer, error) {
@@ -120,6 +130,11 @@ func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.
 		return domain.Offers{}, err
 	}
 
+	err = r.InsertUsersIntoArray(offers.Items)
+	if err != nil {
+		return domain.Offers{}, err
+	}
+
 	offers.Total = totalCount
 	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
 
@@ -139,6 +154,34 @@ func (r offerRepository) FindByCategory(category string) ([]domain.Offer, error)
 	return r.mapModelToDomainMass(data), nil
 }
 
+func (r offerRepository) GetUserForOffer(id uint64) (domain.User, error) {
+	var user user
+	err := r.collUser.Find(db.Cond{"id": id}).Select("id", "name", "email").One(&user)
+	if err != nil {
+		return domain.User{}, err
+	}
+	return mapModelToDomainUser(user), nil
+}
+
+func (r offerRepository) InsertUsersIntoArray(offers []domain.Offer) error {
+	for i := range offers {
+		user, err := r.GetUserForOffer(offers[i].User.Id)
+		if err != nil {
+			return err
+		}
+		offers[i].User = user
+	}
+	return nil
+}
+
+func mapModelToDomainUser(m user) domain.User {
+	return domain.User{
+		Id:    m.Id,
+		Name:  m.Name,
+		Email: m.Email,
+	}
+}
+
 func (r offerRepository) mapDomainToModel(d domain.Offer) offer {
 	return offer{
 		Id:          d.Id,
@@ -150,8 +193,8 @@ func (r offerRepository) mapDomainToModel(d domain.Offer) offer {
 		Stock:       d.Stock,
 		Cover:       d.Cover.Name,
 		Status:      d.Status,
+		UserId:      d.User.Id,
 		FarmId:      d.Farm.Id,
-		UserId:      d.UserId,
 		CreatedDate: d.CreatedDate,
 		UpdatedDate: d.UpdatedDate,
 		DeletedDate: d.DeletedDate,
@@ -159,7 +202,6 @@ func (r offerRepository) mapDomainToModel(d domain.Offer) offer {
 }
 
 func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
-
 	return domain.Offer{
 		Id:          o.Id,
 		Title:       o.Title,
@@ -170,8 +212,8 @@ func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
 		Stock:       o.Stock,
 		Cover:       domain.Image{Name: o.Cover},
 		Status:      o.Status,
+		User:        domain.User{Id: o.UserId},
 		Farm:        domain.Farm{Id: o.FarmId},
-		UserId:      o.UserId,
 		CreatedDate: o.CreatedDate,
 		UpdatedDate: o.UpdatedDate,
 		DeletedDate: o.DeletedDate,

@@ -12,14 +12,16 @@ type OrderRequest struct {
 }
 
 type UpdateOrderRequest struct {
-	AddressId uint64 `json:"address_id" validate:"required"`
-	Comment   string `json:"comment"`
+	AddressId     uint64  `json:"address_id" validate:"required"`
+	Comment       string  `json:"comment"`
+	ShippingPrice float64 `json:"shipping_price"`
 }
 
 func (m UpdateOrderRequest) ToDomainModel() (interface{}, error) {
 	return domain.Order{
-		AddressId: m.AddressId,
-		Comment:   m.Comment,
+		AddressId:     m.AddressId,
+		Comment:       m.Comment,
+		ShippingPrice: m.ShippingPrice,
 	}, nil
 }
 

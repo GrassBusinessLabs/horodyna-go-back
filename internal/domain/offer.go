@@ -13,7 +13,7 @@ type Offer struct {
 	Unit        string
 	Stock       uint
 	Status      bool
-	UserId      uint64
+	User        User
 	Farm        Farm
 	Cover       Image
 	CreatedDate time.Time
@@ -28,5 +28,5 @@ type Offers struct {
 }
 
 func (o Offer) GetUserId() uint64 {
-	return o.UserId
+	return o.User.Id
 }
