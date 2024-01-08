@@ -16,6 +16,16 @@ type FarmDto struct {
 	User      UserDto `json:"user"`
 }
 
+type FarmWithOutDto struct {
+	Id        uint64  `json:"id"`
+	Name      string  `json:"name"`
+	City      string  `json:"city"`
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+	UserId    uint64  `json:"user_id"`
+}
+
 type FarmsDto struct {
 	Items []FarmDto `json:"items"`
 	Pages uint      `json:"pages"`
@@ -36,6 +46,19 @@ func (d FarmDto) DomainToDto(farm domain.Farm, us app.UserService) FarmDto {
 		Latitude:  farm.Latitude,
 		Longitude: farm.Longitude,
 		User:      UserDto{}.DomainToDto(user),
+	}
+}
+
+func (d FarmWithOutDto) DomainToDto(farm domain.Farm) FarmWithOutDto {
+
+	return FarmWithOutDto{
+		Id:        farm.Id,
+		Name:      farm.Name,
+		City:      farm.City,
+		Address:   farm.Address,
+		Latitude:  farm.Latitude,
+		Longitude: farm.Longitude,
+		UserId:    farm.UserId,
 	}
 }
 
