@@ -34,7 +34,7 @@ func (c OfferController) Save() http.HandlerFunc {
 			BadRequest(w, err)
 			return
 		}
-		offer.UserId = u.Id
+		offer.User.Id = u.Id
 		offer.Status = true
 
 		farm, err := c.farmService.FindById(offer.Farm.Id)

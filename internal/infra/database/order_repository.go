@@ -2,6 +2,7 @@ package database
 
 import (
 	"boilerplate/internal/domain"
+	"errors"
 	"math"
 	"time"
 
@@ -47,6 +48,11 @@ func NewOrderRepository(dbSession db.Session, order_item_repo OrderItemRepositor
 
 func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	o := r.mapDomainToModel(order)
+	exists, err := r.coll.Find(db.Cond{"deleted_date": nil, "status": domain.DRAFT, "user_id": order.UserId}).Exists()
+	if err != nil || exists {
+		return domain.Order{}, errors.New("User already have an order in DRAFT status.")
+	}
+
 	o.Status = string(domain.DRAFT)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
 	ordrItmsModel, ProdPrice, err := r.orderItemRepo.PrepareAllToSave(order.OrderItems, o.UserId)

@@ -272,6 +272,10 @@ func UserRouter(r chi.Router, uc controllers.UserController) {
 func ImageRouter(r chi.Router, ic controllers.ImageModelController, is app.ImageModelService) {
 	pathObjectMiddleware := middlewares.PathObject("imageId", controllers.ImageKey, is)
 	r.Route("/images", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			ic.FindAll(),
+		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{imageId}",
 			ic.FindById(),
@@ -280,7 +284,6 @@ func ImageRouter(r chi.Router, ic controllers.ImageModelController, is app.Image
 			"/",
 			ic.Save(),
 		)
-
 		apiRouter.With(pathObjectMiddleware).Delete(
 			"/{imageId}",
 			ic.Delete(),

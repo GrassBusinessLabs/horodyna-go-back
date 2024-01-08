@@ -114,10 +114,10 @@ func (r farmRepository) FindAllByCoords(points domain.Points, p domain.Paginatio
 
 	query := r.coll.Find(db.Cond{"deleted_date": nil,
 		"id IN":       ids,
-		"latitude >":  points.UpperLeftPoint.Lat,
-		"latitude <":  points.BottomRightPoint.Lat,
-		"longitude >": points.UpperLeftPoint.Lng,
-		"longitude <": points.BottomRightPoint.Lng})
+		"latitude <":  points.UpperLeftPoint.Lat,
+		"latitude >":  points.BottomRightPoint.Lat,
+		"longitude <": points.UpperLeftPoint.Lng,
+		"longitude >": points.BottomRightPoint.Lng})
 	res := query.Paginate(uint(p.CountPerPage))
 	err = res.Page(uint(p.Page)).All(&data)
 	if err != nil {

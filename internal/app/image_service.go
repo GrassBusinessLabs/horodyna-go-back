@@ -11,6 +11,7 @@ import (
 type ImageModelService interface {
 	Find(id uint64) (interface{}, error)
 	Save(imageM domain.Image) (domain.Image, error)
+	FindAll(entity string, id uint64) ([]domain.Image, error)
 	FindById(id uint64) (domain.Image, error)
 	Delete(id uint64) error
 }
@@ -34,12 +35,13 @@ func (s imageModelService) Save(image domain.Image) (domain.Image, error) {
 		return domain.Image{}, err
 	}
 
-	err = s.imageServ.SaveImage(image.Name, decodedBytes)
+	name, err := s.imageServ.SaveImage(image.Name, decodedBytes)
 	if err != nil {
 		log.Printf("ImageModelService: %s", err)
 		return domain.Image{}, err
 	}
 
+	image.Name = name
 	savedim, err := s.imageMRepo.Save(image)
 	if err != nil {
 		log.Printf("ImageModelService: %s", err)
@@ -57,6 +59,16 @@ func (s imageModelService) Find(id uint64) (interface{}, error) {
 		return domain.Image{}, err
 	}
 	return i, err
+}
+
+func (s imageModelService) FindAll(entity string, id uint64) ([]domain.Image, error) {
+	images, err := s.imageMRepo.FindAll(entity, id)
+	if err != nil {
+		log.Printf("ImageModelService: %s", err)
+		return []domain.Image{}, err
+	}
+
+	return images, nil
 }
 
 func (s imageModelService) FindById(id uint64) (domain.Image, error) {

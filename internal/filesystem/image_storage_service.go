@@ -5,16 +5,22 @@ import (
 	"bytes"
 	stdimg "image"
 	"image/jpeg"
+	"io"
 	"log"
+	"math/rand"
 	"os"
 	"path"
+	"strconv"
+	"strings"
+	"time"
 
 	"golang.org/x/image/draw"
 )
 
 type ImageStorageService interface {
-	SaveImage(filename string, content []byte) error
+	SaveImage(filename string, content []byte) (string, error)
 	RemoveImage(filename string) error
+	UpdateImage(oldfilename string, filename string, content []byte) (string, error)
 }
 
 type imageStorageService struct {
@@ -27,12 +33,17 @@ func NewImageStorageService(location string) ImageStorageService {
 	}
 }
 
-func (s imageStorageService) SaveImage(filename string, content []byte) error {
-	location := path.Join(s.loc, filename)
-	err := writeFileToStorage(location, content)
+func (s imageStorageService) SaveImage(filename string, content []byte) (string, error) {
+	name, err := GenerateFileName(s.loc, filename)
+	if err != nil {
+		return "", err
+	}
+
+	location := path.Join(s.loc, name)
+	err = writeFileToStorage(location, content)
 	if err != nil {
 		log.Print(err)
-		return err
+		return "", err
 	}
 
 	/*
@@ -49,7 +60,43 @@ func (s imageStorageService) SaveImage(filename string, content []byte) error {
 		}
 	*/
 
-	return nil
+	return name, nil
+}
+
+func (s imageStorageService) UpdateImage(oldfilename string, filename string, content []byte) (string, error) {
+	location := path.Join(s.loc, oldfilename)
+	filer, err := os.Open(location)
+	if err != nil {
+		return "", err
+	}
+	file_content, err := io.ReadAll(filer)
+	if err != nil {
+		return "", err
+	}
+	filer.Close()
+
+	if AreBytesEqual(content, file_content) {
+		return oldfilename, nil
+	}
+
+	err = s.RemoveImage(oldfilename)
+	if err != nil {
+		return "", err
+	}
+
+	name, err := GenerateFileName(s.loc, filename)
+	if err != nil {
+		return "", err
+	}
+
+	location = path.Join(s.loc, name)
+	err = writeFileToStorage(location, content)
+	if err != nil {
+		log.Print(err)
+		return "", err
+	}
+
+	return name, nil
 }
 
 func (s imageStorageService) RemoveImage(filename string) error {
@@ -61,6 +108,32 @@ func (s imageStorageService) RemoveImage(filename string) error {
 	}
 
 	return nil
+}
+
+func GenerateFileName(loc string, name string) (string, error) {
+	location := path.Join(loc, name)
+	_, err := os.Stat(location)
+	if !os.IsNotExist(err) {
+		source := rand.NewSource(time.Now().UnixNano())
+		rng := rand.New(source)
+		num := strconv.FormatUint(rng.Uint64(), 10)
+		splited := strings.Split(name, ".")
+		return GenerateFileName(loc, splited[0]+"_"+num+"."+splited[1])
+	}
+
+	return name, nil
+}
+
+func AreBytesEqual(b1, b2 []byte) bool {
+	if len(b1) != len(b2) {
+		return false
+	}
+	for i := range b1 {
+		if b1[i] != b2[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // nolint

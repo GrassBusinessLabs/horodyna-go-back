@@ -46,18 +46,13 @@ func (s offerService) Save(offer domain.Offer) (domain.Offer, error) {
 		return domain.Offer{}, err
 	}
 
-	err = s.imageService.SaveImage(offer.Cover.Name, decodedBytes)
+	name, err := s.imageService.SaveImage(offer.Cover.Name, decodedBytes)
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err
 	}
 
-	offer, err = s.offerRepo.Update(offer)
-	if err != nil {
-		log.Printf("OfferService: %s", err)
-		return domain.Offer{}, err
-	}
-
+	offer.Cover.Name = name
 	o, err := s.offerRepo.Save(offer)
 	if err != nil {
 		log.Printf("OfferService: %s", err)
@@ -88,27 +83,25 @@ func (s offerService) FindAllByFarmId(farmId uint64, p domain.Pagination) (domai
 }
 
 func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, error) {
-	decodedBytes, err := base64.StdEncoding.DecodeString(req.Cover.Data)
-	if err != nil {
-		log.Printf("OfferService: %s", err)
-		return domain.Offer{}, err
-	}
-
-	if req.Cover.Name != off.Cover.Name {
-		err = s.imageService.RemoveImage(off.Cover.Name)
-		if err != nil {
-			log.Printf("OfferService: %s", err)
-		}
-
-		err = s.imageService.SaveImage(req.Cover.Name, decodedBytes)
+	if req.Cover.Name != "" {
+		decodedBytes, err := base64.StdEncoding.DecodeString(req.Cover.Data)
 		if err != nil {
 			log.Printf("OfferService: %s", err)
 			return domain.Offer{}, err
 		}
+
+		name, err := s.imageService.UpdateImage(off.Cover.Name, req.Cover.Name, decodedBytes)
+		if err != nil {
+			log.Printf("OfferService: %s", err)
+			return domain.Offer{}, err
+		}
+		req.Cover.Name = name
+	} else {
+		req.Cover.Name = off.Cover.Name
 	}
 
 	req.Id = off.Id
-	req.UserId = off.UserId
+	req.User.Id = off.User.Id
 	offer, err := s.offerRepo.Update(req)
 	if err != nil {
 		log.Printf("OfferService: %s", err)

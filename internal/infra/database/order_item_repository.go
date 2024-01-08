@@ -87,7 +87,7 @@ func (r orderItemRepository) PrepareAllToSave(ords []domain.OrderItem, orderUser
 		if offer.Stock < uint(item.Amount) {
 			return []orderItem{}, 0, errors.New("The orderitem amount can`t be more than in offer.")
 		}
-		if offer.UserId == orderUserId {
+		if offer.User.Id == orderUserId {
 			return []orderItem{}, 0, errors.New("The owner of the offer can`t buy his products.")
 		}
 

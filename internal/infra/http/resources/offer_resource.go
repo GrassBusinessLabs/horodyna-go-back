@@ -15,7 +15,7 @@ type OfferDto struct {
 	Stock       uint    `json:"stock"`
 	Status      bool    `json:"status"`
 	Cover       string  `json:"image"`
-	UserId      uint64  `json:"user_id"`
+	User        UserDto `json:"user"`
 	FarmId      uint64  `json:"farm_id"`
 }
 
@@ -37,7 +37,7 @@ func (d OfferDto) DomainToDto(offer domain.Offer) OfferDto {
 		Cover:       offer.Cover.Name,
 		Status:      offer.Status,
 		FarmId:      offer.Farm.Id,
-		UserId:      offer.UserId,
+		User:        UserDto{}.DomainToDto(offer.User),
 	}
 }
 
