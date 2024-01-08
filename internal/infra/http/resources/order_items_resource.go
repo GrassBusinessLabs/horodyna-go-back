@@ -5,13 +5,14 @@ import (
 )
 
 type OrderItemDto struct {
-	Id         uint64  `json:"id"`
-	OrderId    uint64  `json:"order_id"`
-	OfferId    uint64  `json:"offer_id"`
-	Title      string  `json:"title"`
-	Price      float64 `json:"price"`
-	TotalPrice float64 `json:"total_price"`
-	Amount     uint32  `json:"amount"`
+	Id         uint64         `json:"id"`
+	OrderId    uint64         `json:"order_id"`
+	OfferId    uint64         `json:"offer_id"`
+	Title      string         `json:"title"`
+	Price      float64        `json:"price"`
+	TotalPrice float64        `json:"total_price"`
+	Amount     uint32         `json:"amount"`
+	Farm       FarmWithOutDto `json:"farm"`
 }
 
 func (d OrderItemDto) DomainToDto(o domain.OrderItem) OrderItemDto {
@@ -23,5 +24,6 @@ func (d OrderItemDto) DomainToDto(o domain.OrderItem) OrderItemDto {
 		Price:      o.Price,
 		TotalPrice: o.TotalPrice,
 		Amount:     o.Amount,
+		Farm:       FarmWithOutDto{}.DomainToDto(o.Farm),
 	}
 }

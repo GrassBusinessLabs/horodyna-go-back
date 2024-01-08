@@ -37,13 +37,15 @@ type OrderItemRepository interface {
 
 type orderItemRepository struct {
 	offerRepo OfferRepository
+	farmRepo  FarmRepository
 	coll      db.Collection
 	orderColl db.Collection
 }
 
-func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository) OrderItemRepository {
+func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository, farmR FarmRepository) OrderItemRepository {
 	return orderItemRepository{
 		offerRepo: offerR,
+		farmRepo:  farmR,
 		coll:      dbSession.Collection(OrderItemsTableName),
 		orderColl: dbSession.Collection(OrdersTableName),
 	}
@@ -60,6 +62,7 @@ func (r orderItemRepository) FindById(id uint64) (domain.OrderItem, error) {
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
+
 	return order, nil
 }
 
@@ -183,6 +186,19 @@ func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.
 	newOrderItems, err := r.mapModelToDomainMass(orderItems)
 	if err != nil {
 		return []domain.OrderItem{}, err
+	}
+
+	for i, order := range newOrderItems {
+		offer, err := r.offerRepo.FindById(order.OfferId)
+		if err != nil {
+			return []domain.OrderItem{}, err
+		}
+
+		farm, err := r.farmRepo.FindById(offer.Farm.Id)
+		if err != nil {
+			return []domain.OrderItem{}, err
+		}
+		newOrderItems[i].Farm = farm
 	}
 	return newOrderItems, nil
 }

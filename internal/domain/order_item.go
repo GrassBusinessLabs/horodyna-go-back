@@ -12,6 +12,7 @@ type OrderItem struct {
 	Amount      uint32
 	Order       Order
 	OfferId     uint64
+	Farm        Farm
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate *time.Time

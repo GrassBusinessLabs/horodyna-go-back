@@ -57,7 +57,7 @@ func New(conf config.Configuration) Container {
 	sessionRepository := database.NewSessRepository(sess)
 	offerRepository := database.NewOfferRepository(sess)
 	farmRepository := database.NewFarmRepository(sess, offerRepository)
-	orderItemRepository := database.NewOrderItemRepository(sess, offerRepository)
+	orderItemRepository := database.NewOrderItemRepository(sess, offerRepository, farmRepository)
 	orderRepository := database.NewOrderRepository(sess, orderItemRepository)
 	addressRepository := database.NewAddressepository(sess)
 	ImageRepository := database.NewImageModelRepository(sess)
