@@ -6,6 +6,7 @@ import (
 	"boilerplate/internal/infra/database"
 	"encoding/base64"
 	"log"
+	"os"
 )
 
 type OfferService interface {
@@ -114,6 +115,14 @@ func (s offerService) Update(off domain.Offer, req domain.Offer) (domain.Offer, 
 func (s offerService) Delete(offer domain.Offer) error {
 	err := s.imageService.RemoveImage(offer.Cover.Name)
 	if err != nil {
+		if _, ok := err.(*os.PathError); ok {
+			err = s.offerRepo.Delete(offer.Id)
+			if err != nil {
+				log.Printf("OfferService: %s", err)
+				return err
+			}
+			return nil
+		}
 		log.Printf("OfferService: %s", err)
 		return err
 	}

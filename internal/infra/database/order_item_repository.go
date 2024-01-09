@@ -40,6 +40,7 @@ type orderItemRepository struct {
 	farmRepo  FarmRepository
 	coll      db.Collection
 	orderColl db.Collection
+	sess      db.Session
 }
 
 func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository, farmR FarmRepository) OrderItemRepository {
@@ -48,6 +49,7 @@ func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository, farmR 
 		farmRepo:  farmR,
 		coll:      dbSession.Collection(OrderItemsTableName),
 		orderColl: dbSession.Collection(OrdersTableName),
+		sess:      dbSession,
 	}
 }
 
@@ -135,6 +137,12 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
+	farm, err := r.GetFarmByOfferId(order.OfferId)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+	order.Farm = farm
+
 	return order, nil
 }
 
@@ -159,6 +167,12 @@ func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, er
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
+	farm, err := r.GetFarmByOfferId(order.OfferId)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+	order.Farm = farm
+
 	return order, nil
 }
 
@@ -188,13 +202,8 @@ func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.
 		return []domain.OrderItem{}, err
 	}
 
-	for i, order := range newOrderItems {
-		offer, err := r.offerRepo.FindById(order.OfferId)
-		if err != nil {
-			return []domain.OrderItem{}, err
-		}
-
-		farm, err := r.farmRepo.FindById(offer.Farm.Id)
+	for i := range newOrderItems {
+		farm, err := r.GetFarmByOfferId(newOrderItems[i].OfferId)
 		if err != nil {
 			return []domain.OrderItem{}, err
 		}
@@ -211,6 +220,19 @@ func (r orderItemRepository) FindOrderWithTwoFields(orderId uint64) (domain.Orde
 	}
 
 	return MapModelToDomain(o), nil
+}
+
+func (r orderItemRepository) GetFarmByOfferId(offerId uint64) (domain.Farm, error) {
+	var farmModel farm
+	err := r.sess.SQL().Select("farms", "*").From("offers").
+		Where("offers.id = ?", offerId).
+		Join("farms").On("offers.farm_id = farms.id").
+		One(&farmModel)
+	if err != nil {
+		return domain.Farm{}, err
+	}
+
+	return r.farmRepo.mapModelToDomain(farmModel), nil
 }
 
 func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {

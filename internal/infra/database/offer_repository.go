@@ -56,7 +56,14 @@ func (r offerRepository) Save(offer domain.Offer) (domain.Offer, error) {
 	if err != nil {
 		return domain.Offer{}, err
 	}
-	return r.mapModelToDomain(u), nil
+	user, err := r.GetUserForOffer(u.UserId)
+	if err != nil {
+		return domain.Offer{}, err
+	}
+	offer = r.mapModelToDomain(u)
+	offer.User = user
+
+	return offer, nil
 }
 
 func (r offerRepository) FindById(id uint64) (domain.Offer, error) {
@@ -83,7 +90,14 @@ func (or offerRepository) Update(offer domain.Offer) (domain.Offer, error) {
 	if err != nil {
 		return domain.Offer{}, err
 	}
-	return or.mapModelToDomain(o), nil
+	user, err := or.GetUserForOffer(o.UserId)
+	if err != nil {
+		return domain.Offer{}, err
+	}
+	offer = or.mapModelToDomain(o)
+	offer.User = user
+
+	return offer, nil
 }
 
 func (r offerRepository) Delete(id uint64) error {
@@ -103,6 +117,14 @@ func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (do
 	totalCount, err := res.TotalEntries()
 	if err != nil {
 		return domain.Offers{}, err
+	}
+
+	for i, offer := range offers.Items {
+		user, err := r.GetUserForOffer(offer.User.Id)
+		if err != nil {
+			return domain.Offers{}, err
+		}
+		offers.Items[i].User = user
 	}
 
 	offers.Total = totalCount
