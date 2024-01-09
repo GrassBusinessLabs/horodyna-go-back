@@ -30,6 +30,7 @@ type FarmRepository interface {
 	FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error)
 	FindAll(pag domain.Pagination) (domain.Farms, error)
 	Delete(id uint64) error
+	mapModelToDomain(m farm) domain.Farm
 }
 
 type farmRepository struct {
