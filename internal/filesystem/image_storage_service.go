@@ -66,35 +66,21 @@ func (s imageStorageService) SaveImage(filename string, content []byte) (string,
 func (s imageStorageService) UpdateImage(oldfilename string, filename string, content []byte) (string, error) {
 	location := path.Join(s.loc, oldfilename)
 	filer, err := os.Open(location)
-	if err != nil {
-		if _, ok := err.(*os.PathError); ok {
-			name, err := GenerateFileName(s.loc, filename)
-			if err != nil {
-				return "", err
-			}
-
-			location = path.Join(s.loc, name)
-			err = writeFileToStorage(location, content)
-			if err != nil {
-				log.Print(err)
-				return "", err
-			}
-			return name, nil
+	if err == nil {
+		file_content, err := io.ReadAll(filer)
+		if err != nil {
+			return "", err
 		}
-		return "", err
+		filer.Close()
+		if AreBytesEqual(content, file_content) {
+			return oldfilename, nil
+		}
+		err = s.RemoveImage(oldfilename)
+		if err != nil {
+			return "", err
+		}
 	}
-	file_content, err := io.ReadAll(filer)
-	if err != nil {
-		return "", err
-	}
-	filer.Close()
-	if AreBytesEqual(content, file_content) {
-		return oldfilename, nil
-	}
-	err = s.RemoveImage(oldfilename)
-	if err != nil {
-		return "", err
-	}
+
 	name, err := GenerateFileName(s.loc, filename)
 	if err != nil {
 		return "", err

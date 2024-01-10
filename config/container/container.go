@@ -78,7 +78,7 @@ func New(conf config.Configuration) Container {
 	farmController := controllers.NewFarmController(farmService, userService)
 	categoryController := controllers.NewCategoryController(catService)
 	offerController := controllers.NewOfferController(offerService, farmService)
-	orderController := controllers.NewOrderController(orderService)
+	orderController := controllers.NewOrderController(orderService, orderItemService)
 	orderItemController := controllers.NewOrderItemController(orderItemService)
 	addressController := controllers.NewAddressController(addressService, userService)
 	imageController := controllers.NewImageModelController(imageService)

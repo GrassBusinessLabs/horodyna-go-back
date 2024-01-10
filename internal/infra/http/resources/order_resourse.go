@@ -5,6 +5,19 @@ import (
 )
 
 type OrderDto struct {
+	Id              uint64  `json:"id"`
+	OrderItemsCount uint64  `json:"order_items_count"`
+	Status          string  `json:"status"`
+	Comment         string  `json:"comment"`
+	AddressId       uint64  `json:"address_id"`
+	UserId          uint64  `json:"user_id"`
+	ProductPrice    float64 `json:"product_price"`
+	ShippingPrice   float64 `json:"shipping_price"`
+	TotalPrice      float64 `json:"total_price"`
+	CreatedDate     string  `json:"created_data"`
+}
+
+type OrderDtoWithOrderItems struct {
 	Id            uint64         `json:"id"`
 	OrderItems    []OrderItemDto `json:"order_items"`
 	Status        string         `json:"status"`
@@ -23,15 +36,15 @@ type OrdersDto struct {
 	Total uint64     `json:"total"`
 }
 
-func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
-	OrderItemsDto := make([]OrderItemDto, len(order.OrderItems))
-	for i, item := range order.OrderItems {
-		OrderItemsDto[i] = OrderItemDto{}.DomainToDto(item)
+func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.OrderItem) OrderDtoWithOrderItems {
+	orderItems := make([]OrderItemDto, len(ori))
+	for i, item := range ori {
+		orderItems[i] = OrderItemDto{}.DomainToDto(item)
 	}
 
-	return OrderDto{
+	return OrderDtoWithOrderItems{
 		Id:            order.Id,
-		OrderItems:    OrderItemsDto,
+		OrderItems:    orderItems,
 		Status:        string(order.Status),
 		Comment:       order.Comment,
 		AddressId:     order.AddressId,
@@ -40,6 +53,21 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 		ShippingPrice: order.ShippingPrice,
 		TotalPrice:    order.TotalPrice,
 		CreatedDate:   order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
+	}
+}
+
+func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
+	return OrderDto{
+		Id:              order.Id,
+		OrderItemsCount: order.OrderItemsCount,
+		Status:          string(order.Status),
+		Comment:         order.Comment,
+		AddressId:       order.AddressId,
+		UserId:          order.UserId,
+		ProductPrice:    order.ProductsPrice,
+		ShippingPrice:   order.ShippingPrice,
+		TotalPrice:      order.TotalPrice,
+		CreatedDate:     order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
 

@@ -16,18 +16,19 @@ const (
 )
 
 type Order struct {
-	Id            uint64
-	Comment       string
-	UserId        uint64
-	AddressId     uint64
-	OrderItems    []OrderItem
-	ProductsPrice float64
-	ShippingPrice float64
-	TotalPrice    float64
-	Status        OrderStatus
-	CreatedDate   time.Time
-	UpdatedDate   time.Time
-	DeletedDate   *time.Time
+	Id              uint64
+	Comment         string
+	UserId          uint64
+	AddressId       uint64
+	OrderItems      []OrderItem
+	OrderItemsCount uint64
+	ProductsPrice   float64
+	ShippingPrice   float64
+	TotalPrice      float64
+	Status          OrderStatus
+	CreatedDate     time.Time
+	UpdatedDate     time.Time
+	DeletedDate     *time.Time
 }
 
 type Orders struct {

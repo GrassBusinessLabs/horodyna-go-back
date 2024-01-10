@@ -26,10 +26,12 @@ type orderItem struct {
 
 type OrderItemRepository interface {
 	Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error)
+	Count(orderId uint64) (uint64, error)
 	SaveAll(ords []orderItem, orderId uint64) error
 	PrepareAllToSave(ords []domain.OrderItem, orderUserId uint64) ([]orderItem, float64, error)
 	Update(ords domain.OrderItem) (domain.OrderItem, error)
 	FindAllWithoutPagination(id uint64) ([]domain.OrderItem, error)
+	GetTotalPriceByOrder(orderId uint64) (float64, error)
 	FindById(id uint64) (domain.OrderItem, error)
 	DeleteByOrder(orderId uint64) error
 	Delete(oiId uint64) error
@@ -51,6 +53,14 @@ func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository, farmR 
 		orderColl: dbSession.Collection(OrdersTableName),
 		sess:      dbSession,
 	}
+}
+
+func (r orderItemRepository) Count(orderId uint64) (uint64, error) {
+	count, err := r.coll.Find(db.Cond{"order_id": orderId}).Count()
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }
 
 func (r orderItemRepository) FindById(id uint64) (domain.OrderItem, error) {
@@ -122,6 +132,10 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	if offer.Stock < uint(ords.Amount) {
 		return domain.OrderItem{}, errors.New("The orderitem amount can`t be more than in offer.")
 	}
+	exists, err := r.coll.Find(db.Cond{"order_id": orderId, "offer_id": ords.OfferId, "deleted_date": nil}).Exists()
+	if err == nil && exists {
+		return domain.OrderItem{}, errors.New("The order already have an offer with this id.")
+	}
 
 	ords.Title = offer.Title
 	ords.Price = offer.Price
@@ -132,7 +146,6 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
-
 	order, err := r.mapModelToDomain(o)
 	if err != nil {
 		return domain.OrderItem{}, err
@@ -144,6 +157,20 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	order.Farm = farm
 
 	return order, nil
+}
+
+func (r orderItemRepository) GetTotalPriceByOrder(orderId uint64) (float64, error) {
+	var total float64
+	row, err := r.sess.SQL().QueryRow("SELECT SUM(total_price) FROM order_items WHERE order_id = ? AND deleted_date IS NULL", orderId)
+	if err != nil {
+		return 0, err
+	}
+	err = row.Scan(&total)
+	if err != nil {
+		return 0, err
+	}
+
+	return total, nil
 }
 
 func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, error) {
