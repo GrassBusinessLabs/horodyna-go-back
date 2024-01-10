@@ -10,12 +10,14 @@ import (
 )
 
 type OrderController struct {
-	orderService app.OrderService
+	orderService     app.OrderService
+	orderItemService app.OrderItemsService
 }
 
-func NewOrderController(os app.OrderService) OrderController {
+func NewOrderController(os app.OrderService, ordItemServ app.OrderItemsService) OrderController {
 	return OrderController{
-		orderService: os,
+		orderService:     os,
+		orderItemService: ordItemServ,
 	}
 }
 
@@ -44,7 +46,14 @@ func (c OrderController) Save() http.HandlerFunc {
 func (c OrderController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OrderKey).(domain.Order)
-		Success(w, resources.OrderDto{}.DomainToDto(o))
+		orderItems, err := c.orderItemService.FindAll(o.Id)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(o, orderItems))
 	}
 }
 

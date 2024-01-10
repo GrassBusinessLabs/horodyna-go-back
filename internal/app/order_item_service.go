@@ -9,6 +9,7 @@ import (
 
 type OrderItemsService interface {
 	Save(o domain.OrderItem, orderId uint64) (domain.OrderItem, error)
+	FindAll(orderId uint64) ([]domain.OrderItem, error)
 	Update(o domain.OrderItem, req domain.OrderItem) (domain.OrderItem, error)
 	Delete(o domain.OrderItem) error
 	Find(uint64) (interface{}, error)
@@ -24,6 +25,16 @@ func NewOrderItemsService(or database.OrderItemRepository, order database.OrderR
 type orderItemsService struct {
 	orderItemsRepo database.OrderItemRepository
 	orderRepo      database.OrderRepository
+}
+
+func (s orderItemsService) FindAll(orderId uint64) ([]domain.OrderItem, error) {
+	orderItems, err := s.orderItemsRepo.FindAllWithoutPagination(orderId)
+	if err != nil {
+		log.Printf("OrderItemService: %s", err)
+		return []domain.OrderItem{}, err
+	}
+
+	return orderItems, nil
 }
 
 func (s orderItemsService) Find(id uint64) (interface{}, error) {
