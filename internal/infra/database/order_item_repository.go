@@ -228,7 +228,7 @@ func (r orderItemRepository) Delete(oiId uint64) error {
 
 func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.OrderItem, error) {
 	var orderItems []orderItemWithFarm
-	err := r.sess.SQL().Select("oi", "*", "f.id AS farm_id", "f.name AS farm_name", "f.city AS farm_city", "f.address AS farm_address", "f.user_id").
+	err := r.sess.SQL().Select("oi.*", "f.id AS farm_id", "f.name AS farm_name", "f.city AS farm_city", "f.address AS farm_address", "f.user_id").
 		From("order_items AS oi").
 		Where("oi.order_id = ? AND oi.deleted_date IS NULL", orderId).
 		Join("offers AS o").On("o.id = oi.offer_id").
@@ -317,6 +317,7 @@ func (r orderItemRepository) mapModelToDomainWithoutOrder(m orderItem, f farm) d
 		Title:       m.Title,
 		Farm:        r.farmRepo.mapModelToDomain(f),
 		OfferId:     m.OfferId,
+		Order:       domain.Order{Id: m.OrderId},
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
