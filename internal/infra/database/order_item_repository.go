@@ -24,6 +24,15 @@ type orderItem struct {
 	DeletedDate *time.Time `db:"deleted_date,omitempty"`
 }
 
+type orderItemWithFarm struct {
+	OrderItem orderItem
+	FarmId    uint64 `db:"farm_id"`
+	Name      string `db:"farm_name"`
+	City      string `db:"farm_city"`
+	Address   string `db:"farm_address"`
+	UserId    uint64 `db:"user_id"`
+}
+
 type OrderItemRepository interface {
 	Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error)
 	Count(orderId uint64) (uint64, error)
@@ -218,35 +227,27 @@ func (r orderItemRepository) Delete(oiId uint64) error {
 }
 
 func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.OrderItem, error) {
-	var orderItems []orderItem
-	err := r.coll.Find(db.Cond{"order_id": orderId, "deleted_date": nil}).All(&orderItems)
+	var orderItems []orderItemWithFarm
+	err := r.sess.SQL().Select("oi", "*", "f.id AS farm_id", "f.name AS farm_name", "f.city AS farm_city", "f.address AS farm_address", "f.user_id").
+		From("order_items AS oi").
+		Where("oi.order_id = ? AND oi.deleted_date IS NULL", orderId).
+		Join("offers AS o").On("o.id = oi.offer_id").
+		Join("farms AS f").On("f.id = o.farm_id").All(&orderItems)
 	if err != nil {
 		return []domain.OrderItem{}, err
 	}
-
-	newOrderItems, err := r.mapModelToDomainMass(orderItems)
-	if err != nil {
-		return []domain.OrderItem{}, err
+	domainOrderItems := make([]domain.OrderItem, len(orderItems))
+	for i, oi := range orderItems {
+		orderItem := r.mapModelToDomainWithoutOrder(oi.OrderItem, farm{
+			Id:      oi.FarmId,
+			Name:    oi.Name,
+			City:    oi.City,
+			Address: oi.Address,
+			UserId:  oi.UserId,
+		})
+		domainOrderItems[i] = orderItem
 	}
-
-	for i := range newOrderItems {
-		farm, err := r.GetFarmByOfferId(newOrderItems[i].OfferId)
-		if err != nil {
-			return []domain.OrderItem{}, err
-		}
-		newOrderItems[i].Farm = farm
-	}
-	return newOrderItems, nil
-}
-
-func (r orderItemRepository) FindOrderWithTwoFields(orderId uint64) (domain.Order, error) {
-	var o order
-	err := r.orderColl.Find(db.Cond{"id": orderId}).Select("id", "user_id").One(&o)
-	if err != nil {
-		return domain.Order{}, err
-	}
-
-	return MapModelToDomain(o), nil
+	return domainOrderItems, nil
 }
 
 func (r orderItemRepository) GetFarmByOfferId(offerId uint64) (domain.Farm, error) {
@@ -260,6 +261,16 @@ func (r orderItemRepository) GetFarmByOfferId(offerId uint64) (domain.Farm, erro
 	}
 
 	return r.farmRepo.mapModelToDomain(farmModel), nil
+}
+
+func (r orderItemRepository) FindOrderWithTwoFields(orderId uint64) (domain.Order, error) {
+	var o order
+	err := r.orderColl.Find(db.Cond{"id": orderId}).Select("id", "user_id").One(&o)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	return MapModelToDomain(o), nil
 }
 
 func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {
@@ -297,14 +308,17 @@ func (r orderItemRepository) mapModelToDomain(m orderItem) (domain.OrderItem, er
 	}, nil
 }
 
-func (o orderItemRepository) mapModelToDomainMass(orderItems []orderItem) ([]domain.OrderItem, error) {
-	newOrderItems := make([]domain.OrderItem, len(orderItems))
-	var err error
-	for i, orderItem := range orderItems {
-		newOrderItems[i], err = o.mapModelToDomain(orderItem)
-		if err != nil {
-			return []domain.OrderItem{}, err
-		}
+func (r orderItemRepository) mapModelToDomainWithoutOrder(m orderItem, f farm) domain.OrderItem {
+	return domain.OrderItem{
+		Id:          m.Id,
+		Price:       m.Price,
+		TotalPrice:  m.TotalPrice,
+		Amount:      m.Amount,
+		Title:       m.Title,
+		Farm:        r.farmRepo.mapModelToDomain(f),
+		OfferId:     m.OfferId,
+		CreatedDate: m.CreatedDate,
+		UpdatedDate: m.UpdatedDate,
+		DeletedDate: m.DeletedDate,
 	}
-	return newOrderItems, nil
 }
