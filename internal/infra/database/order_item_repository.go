@@ -65,7 +65,7 @@ func NewOrderItemRepository(dbSession db.Session, offerR OfferRepository, farmR 
 }
 
 func (r orderItemRepository) Count(orderId uint64) (uint64, error) {
-	count, err := r.coll.Find(db.Cond{"order_id": orderId}).Count()
+	count, err := r.coll.Find(db.Cond{"order_id": orderId, "deleted_date": nil}).Count()
 	if err != nil {
 		return 0, err
 	}
