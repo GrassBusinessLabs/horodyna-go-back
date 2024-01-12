@@ -170,7 +170,7 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 
 func (r orderItemRepository) GetTotalPriceByOrder(orderId uint64) (float64, error) {
 	var total float64
-	row, err := r.sess.SQL().QueryRow("SELECT SUM(total_price) FROM order_items WHERE order_id = ? AND deleted_date IS NULL", orderId)
+	row, err := r.sess.SQL().QueryRow("SELECT CASE WHEN SUM(total_price) IS NULL THEN 0 ELSE SUM(total_price) END FROM order_items WHERE order_id = ? AND deleted_date IS NULL", orderId)
 	if err != nil {
 		return 0, err
 	}
