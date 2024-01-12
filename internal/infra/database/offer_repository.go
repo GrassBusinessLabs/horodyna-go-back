@@ -27,6 +27,13 @@ type offer struct {
 	DeletedDate *time.Time `db:"deleted_date,omitempty"`
 }
 
+type offerWithUser struct {
+	Offer     offer
+	UserId    uint64 `db:"id_user"`
+	UserName  string `db:"user_name"`
+	UserEmail string `db:"user_email"`
+}
+
 type OfferRepository interface {
 	Save(offer domain.Offer) (domain.Offer, error)
 	FindById(id uint64) (domain.Offer, error)
@@ -105,58 +112,47 @@ func (r offerRepository) Delete(id uint64) error {
 }
 
 func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error) {
-	var data []offer
-	query := r.coll.Find(db.Cond{"status": true, "deleted_date": nil, "farm_id": farmId})
+	var data []offerWithUser
+	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+		From("offers AS ofr").
+		Where(" ofr.farm_id = ? AND ofr.status = true AND ofr.deleted_date IS NULL", farmId).
+		Join("users AS u").On("u.id = ofr.user_id")
+	res := query.Paginate(uint(p.CountPerPage))
+	err := res.Page(uint(p.Page)).All(&data)
+	if err != nil {
+		return domain.Offers{}, err
+	}
+	offers := r.mapModelsToDomainsWithFarm(data)
+	totalCount, err := res.TotalEntries()
+	if err != nil {
+		return domain.Offers{}, err
+	}
+	offers.Total = totalCount
+	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
+	return offers, nil
+}
+
+func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
+	var data []offerWithUser
+	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+		From("offers AS ofr")
+	if user.Id != 0 {
+		query = query.Where("ofr.user_id = ? AND ofr.deleted_date IS NULL", user.Id)
+	} else {
+		query = query.Where("ofr.deleted_date IS NULL")
+	}
+	query = query.Join("users AS u").On("u.id = ofr.user_id")
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
 	if err != nil {
 		return domain.Offers{}, err
 	}
 
-	offers := r.mapModelToDomainPagination(data)
+	offers := r.mapModelsToDomainsWithFarm(data)
 	totalCount, err := res.TotalEntries()
 	if err != nil {
 		return domain.Offers{}, err
 	}
-
-	for i, offer := range offers.Items {
-		user, err := r.GetUserForOffer(offer.User.Id)
-		if err != nil {
-			return domain.Offers{}, err
-		}
-		offers.Items[i].User = user
-	}
-
-	offers.Total = totalCount
-	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
-
-	return offers, nil
-}
-
-func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
-	var data []offer
-	query := r.coll.Find(db.Cond{"deleted_date": nil})
-	if user.Id != 0 {
-		query = query.And(db.Cond{"user_id": user.Id})
-	}
-
-	res := query.Paginate(uint(p.CountPerPage))
-	err := res.Page(uint(p.Page)).OrderBy("-status").All(&data)
-	if err != nil {
-		return domain.Offers{}, err
-	}
-
-	offers := r.mapModelToDomainPagination(data)
-	totalCount, err := res.TotalEntries()
-	if err != nil {
-		return domain.Offers{}, err
-	}
-
-	err = r.InsertUsersIntoArray(offers.Items)
-	if err != nil {
-		return domain.Offers{}, err
-	}
-
 	offers.Total = totalCount
 	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
 
@@ -242,15 +238,20 @@ func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
 	}
 }
 
+func (f offerRepository) mapModelsToDomainsWithFarm(offers []offerWithUser) domain.Offers {
+	domainOffers := make([]domain.Offer, len(offers))
+	for i, item := range offers {
+		domainOffers[i] = f.mapModelToDomain(item.Offer)
+		domainOffers[i].User = mapModelToDomainUser(user{Id: item.UserId, Name: item.UserName, Email: item.UserEmail})
+	}
+
+	return domain.Offers{Items: domainOffers}
+}
+
 func (f offerRepository) mapModelToDomainMass(offers []offer) []domain.Offer {
 	newOffers := make([]domain.Offer, len(offers))
 	for i, offer := range offers {
 		newOffers[i] = f.mapModelToDomain(offer)
 	}
-
 	return newOffers
-}
-
-func (f offerRepository) mapModelToDomainPagination(offers []offer) domain.Offers {
-	return domain.Offers{Items: f.mapModelToDomainMass(offers)}
 }
