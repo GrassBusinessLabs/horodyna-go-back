@@ -11,13 +11,11 @@ import (
 
 type FarmController struct {
 	farmService app.FarmService
-	userService app.UserService
 }
 
-func NewFarmController(fr app.FarmService, us app.UserService) FarmController {
+func NewFarmController(fr app.FarmService) FarmController {
 	return FarmController{
 		farmService: fr,
-		userService: us,
 	}
 }
 
@@ -43,7 +41,7 @@ func (c FarmController) FindAllByCoords() http.HandlerFunc {
 			InternalServerError(w, err)
 			return
 		}
-		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, c.userService))
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms))
 	}
 }
 
@@ -51,7 +49,7 @@ func (c FarmController) Save() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		u := r.Context().Value(UserKey).(domain.User)
 		farm, err := requests.Bind(r, requests.FarmRequest{}, domain.Farm{})
-		farm.UserId = u.Id
+		farm.User.Id = u.Id
 		if err != nil {
 			log.Printf("FarmController: %s", err)
 			BadRequest(w, err)
@@ -65,14 +63,14 @@ func (c FarmController) Save() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.FarmDto{}.DomainToDto(farm, c.userService))
+		Created(w, resources.FarmDto{}.DomainToDto(farm))
 	}
 }
 
 func (c FarmController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(FarmKey).(domain.Farm)
-		Success(w, resources.FarmDto{}.DomainToDto(f, c.userService))
+		Success(w, resources.FarmDto{}.DomainToDto(f))
 	}
 }
 
@@ -87,7 +85,7 @@ func (c FarmController) Update() http.HandlerFunc {
 		}
 
 		farm.Id = f.Id
-		farm.UserId = f.UserId
+		farm.User.Id = f.User.Id
 		newfarm, err := c.farmService.Update(farm, farm)
 		if err != nil {
 			log.Printf("FarmController: %s", err)
@@ -95,7 +93,7 @@ func (c FarmController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.FarmDto{}.DomainToDto(newfarm, c.userService))
+		Success(w, resources.FarmDto{}.DomainToDto(newfarm))
 	}
 }
 
@@ -129,6 +127,6 @@ func (c FarmController) ListView() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, c.userService))
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms))
 	}
 }

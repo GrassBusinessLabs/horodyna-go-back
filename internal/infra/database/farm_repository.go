@@ -23,6 +23,13 @@ type farm struct {
 	DeletedDate *time.Time `db:"deleted_date,omitempty"`
 }
 
+type farmWithUser struct {
+	Farm      farm
+	UserId    uint64 `db:"id_user"`
+	UserName  string `db:"user_name"`
+	UserEmail string `db:"user_email"`
+}
+
 type FarmRepository interface {
 	Save(farm domain.Farm) (domain.Farm, error)
 	FindById(id uint64) (domain.Farm, error)
@@ -30,7 +37,7 @@ type FarmRepository interface {
 	FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error)
 	FindAll(pag domain.Pagination) (domain.Farms, error)
 	Delete(id uint64) error
-	mapModelToDomain(m farm) domain.Farm
+	mapModelToDomainWithoutUser(m farm) domain.Farm
 }
 
 type farmRepository struct {
@@ -48,20 +55,19 @@ func NewFarmRepository(dbSession db.Session, offerR OfferRepository) FarmReposit
 func (r farmRepository) Save(farm domain.Farm) (domain.Farm, error) {
 	u := r.mapDomainToModel(farm)
 	u.CreatedDate, u.UpdatedDate = time.Now(), time.Now()
-	err := r.coll.InsertReturning(&u)
+	farmR, err := r.findFarmWithUser(farm.Id)
 	if err != nil {
 		return domain.Farm{}, err
 	}
-	return r.mapModelToDomain(u), nil
+	return farmR, nil
 }
 
 func (r farmRepository) FindById(id uint64) (domain.Farm, error) {
-	var f farm
-	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&f)
+	farm, err := r.findFarmWithUser(id)
 	if err != nil {
 		return domain.Farm{}, err
 	}
-	return r.mapModelToDomain(f), nil
+	return farm, nil
 }
 
 func (r farmRepository) Update(farm domain.Farm) (domain.Farm, error) {
@@ -71,7 +77,11 @@ func (r farmRepository) Update(farm domain.Farm) (domain.Farm, error) {
 	if err != nil {
 		return domain.Farm{}, err
 	}
-	return r.mapModelToDomain(u), nil
+	farmR, err := r.findFarmWithUser(farm.Id)
+	if err != nil {
+		return domain.Farm{}, err
+	}
+	return farmR, nil
 }
 
 func (r farmRepository) Delete(id uint64) error {
@@ -79,30 +89,15 @@ func (r farmRepository) Delete(id uint64) error {
 }
 
 func (r farmRepository) FindAll(p domain.Pagination) (domain.Farms, error) {
-	var data []farm
-	query := r.coll.Find(db.Cond{"deleted_date": nil})
-
-	res := query.Paginate(uint(p.CountPerPage))
-	err := res.Page(uint(p.Page)).All(&data)
+	farms, err := r.findFarmsWithUsers(db.Cond{"farms.deleted_date": nil}, p)
 	if err != nil {
 		return domain.Farms{}, err
 	}
-
-	farms := r.mapModelToDomainPagination(data)
-
-	totalCount, err := res.TotalEntries()
-	if err != nil {
-		return domain.Farms{}, err
-	}
-
-	farms.Total = totalCount
-	farms.Pages = uint(math.Ceil(float64(farms.Total) / float64(p.CountPerPage)))
 
 	return farms, nil
 }
 
 func (r farmRepository) FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error) {
-	var data []farm
 	offers, err := r.offerRepo.FindByCategory(points.Category)
 	if err != nil {
 		return domain.Farms{}, err
@@ -113,27 +108,58 @@ func (r farmRepository) FindAllByCoords(points domain.Points, p domain.Paginatio
 		ids[i] = item.Farm.Id
 	}
 
-	query := r.coll.Find(db.Cond{"deleted_date": nil,
-		"id IN":       ids,
-		"latitude <":  points.UpperLeftPoint.Lat,
-		"latitude >":  points.BottomRightPoint.Lat,
-		"longitude <": points.UpperLeftPoint.Lng,
-		"longitude >": points.BottomRightPoint.Lng})
-	res := query.Paginate(uint(p.CountPerPage))
-	err = res.Page(uint(p.Page)).All(&data)
+	farms, err := r.findFarmsWithUsers(db.Cond{"farms.deleted_date": nil,
+		"farms.id IN":       ids,
+		"farms.latitude <":  points.UpperLeftPoint.Lat,
+		"farms.latitude >":  points.BottomRightPoint.Lat,
+		"farms.longitude <": points.UpperLeftPoint.Lng,
+		"farms.longitude >": points.BottomRightPoint.Lng}, p)
 	if err != nil {
 		return domain.Farms{}, err
 	}
 
-	farms := r.mapModelToDomainPagination(data)
+	return farms, nil
+}
+
+func (r farmRepository) findFarmsWithUsers(cond db.Cond, p domain.Pagination) (domain.Farms, error) {
+	var farms []farmWithUser
+	query := r.coll.Session().SQL().Select("farms.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+		From("farms").
+		Where(cond).
+		Join("users as u").On("u.id = farms.user_id")
+	res := query.Paginate(uint(p.CountPerPage))
+	err := res.Page(uint(p.Page)).All(&farms)
+	if err != nil {
+		return domain.Farms{}, err
+	}
+
+	domainFarms := make([]domain.Farm, len(farms))
+	for i, farm := range farms {
+		domainFarms[i] = r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail})
+	}
+	farmsR := domain.Farms{Items: domainFarms}
 	totalCount, err := res.TotalEntries()
 	if err != nil {
 		return domain.Farms{}, err
 	}
 
-	farms.Total = totalCount
-	farms.Pages = uint(math.Ceil(float64(farms.Total) / float64(p.CountPerPage)))
-	return farms, nil
+	farmsR.Total = totalCount
+	farmsR.Pages = uint(math.Ceil(float64(farmsR.Total) / float64(p.CountPerPage)))
+
+	return farmsR, nil
+}
+
+func (r farmRepository) findFarmWithUser(farmId uint64) (domain.Farm, error) {
+	var farm farmWithUser
+	err := r.coll.Session().SQL().Select("farms.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+		From("farms").
+		Where(db.Cond{"farms.id": farmId, "farms.deleted_date": nil}).
+		Join("users as u").On("u.id = farms.user_id").One(&farm)
+	if err != nil {
+		return domain.Farm{}, err
+	}
+
+	return r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail}), nil
 }
 
 func (r farmRepository) mapDomainToModel(m domain.Farm) farm {
@@ -143,7 +169,7 @@ func (r farmRepository) mapDomainToModel(m domain.Farm) farm {
 		City:        m.City,
 		Address:     m.Address,
 		CreatedDate: m.CreatedDate,
-		UserId:      m.UserId,
+		UserId:      m.User.Id,
 		Latitude:    m.Latitude,
 		Longitude:   m.Longitude,
 		UpdatedDate: m.UpdatedDate,
@@ -151,14 +177,14 @@ func (r farmRepository) mapDomainToModel(m domain.Farm) farm {
 	}
 }
 
-func (r farmRepository) mapModelToDomain(m farm) domain.Farm {
+func (r farmRepository) mapModelToDomain(m farm, u user) domain.Farm {
 	return domain.Farm{
 		Id:          m.Id,
 		Name:        m.Name,
 		City:        m.City,
 		Address:     m.Address,
 		CreatedDate: m.CreatedDate,
-		UserId:      m.UserId,
+		User:        mapModelToDomainUser(u),
 		Latitude:    m.Latitude,
 		Longitude:   m.Longitude,
 		UpdatedDate: m.UpdatedDate,
@@ -166,10 +192,17 @@ func (r farmRepository) mapModelToDomain(m farm) domain.Farm {
 	}
 }
 
-func (f farmRepository) mapModelToDomainPagination(farms []farm) domain.Farms {
-	new_farms := make([]domain.Farm, len(farms))
-	for i, farm := range farms {
-		new_farms[i] = f.mapModelToDomain(farm)
+func (r farmRepository) mapModelToDomainWithoutUser(m farm) domain.Farm {
+	return domain.Farm{
+		Id:          m.Id,
+		Name:        m.Name,
+		City:        m.City,
+		Address:     m.Address,
+		CreatedDate: m.CreatedDate,
+		User:        domain.User{Id: m.UserId},
+		Latitude:    m.Latitude,
+		Longitude:   m.Longitude,
+		UpdatedDate: m.UpdatedDate,
+		DeletedDate: m.DeletedDate,
 	}
-	return domain.Farms{Items: new_farms}
 }
