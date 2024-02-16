@@ -24,6 +24,13 @@ type address struct {
 	DeletedDate time.Time `db:"deleted_date,omitempty"`
 }
 
+type addressWithUser struct {
+	Address   address
+	UserId    uint64 `db:"id_user"`
+	UserName  string `db:"user_name"`
+	UserEmail string `db:"user_email"`
+}
+
 type AddressRepository interface {
 	Create(address domain.Address) (domain.Address, error)
 	Read(id uint64) (domain.Address, error)
@@ -49,16 +56,19 @@ func (r addressRepository) Create(address domain.Address) (domain.Address, error
 	if err != nil {
 		return domain.Address{}, err
 	}
-	return r.mapModelToDomain(a), nil
+	address, err = r.findAddressWithUser(a.ID)
+	if err != nil {
+		return domain.Address{}, nil
+	}
+	return address, nil
 }
 
 func (r addressRepository) Read(id uint64) (domain.Address, error) {
-	var a address
-	err := r.coll.Find(db.Cond{"id": id, "deleted_date": nil}).One(&a)
+	address, err := r.findAddressWithUser(id)
 	if err != nil {
 		return domain.Address{}, err
 	}
-	return r.mapModelToDomain(a), nil
+	return address, nil
 }
 
 func (r addressRepository) Update(address domain.Address) (domain.Address, error) {
@@ -68,7 +78,11 @@ func (r addressRepository) Update(address domain.Address) (domain.Address, error
 	if err != nil {
 		return domain.Address{}, err
 	}
-	return r.mapModelToDomain(a), nil
+	address, err = r.findAddressWithUser(a.ID)
+	if err != nil {
+		return domain.Address{}, nil
+	}
+	return address, nil
 }
 
 func (r addressRepository) Delete(id uint64) error {
@@ -76,32 +90,59 @@ func (r addressRepository) Delete(id uint64) error {
 }
 
 func (r addressRepository) FindAll(p domain.Pagination) (domain.Addresses, error) {
-	var data []address
-	query := r.coll.Find(db.Cond{"deleted_date": nil})
-
-	res := query.Paginate(uint(p.CountPerPage))
-	err := res.Page(uint(p.Page)).All(&data)
+	addresses, err := r.findAddressesWithUsers(db.Cond{"addresses.deleted_date": nil}, p)
 	if err != nil {
 		return domain.Addresses{}, err
 	}
 
-	addresses := r.mapModelSliceToDomainAddress(data)
+	return addresses, nil
+}
 
+func (r addressRepository) findAddressesWithUsers(cond db.Cond, p domain.Pagination) (domain.Addresses, error) {
+	var addresses []addressWithUser
+	query := r.coll.Session().SQL().Select("addresses.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+		From("addresses").
+		Where(cond).
+		Join("users as u").On("u.id = addresses.user_id")
+	res := query.Paginate(uint(p.CountPerPage))
+	err := res.Page(uint(p.Page)).All(&addresses)
+	if err != nil {
+		return domain.Addresses{}, err
+	}
+
+	domainAddresses := make([]domain.Address, len(addresses))
+	for i, address := range addresses {
+		domainAddresses[i] = r.mapModelToDomain(address.Address, user{Id: address.UserId, Name: address.UserName, Email: address.UserEmail})
+	}
+	addressesR := domain.Addresses{Items: domainAddresses}
 	totalCount, err := res.TotalEntries()
 	if err != nil {
 		return domain.Addresses{}, err
 	}
 
-	addresses.Total = totalCount
-	addresses.Pages = uint(math.Ceil(float64(addresses.Total) / float64(p.CountPerPage)))
+	addressesR.Total = totalCount
+	addressesR.Pages = uint(math.Ceil(float64(addressesR.Total) / float64(p.CountPerPage)))
 
-	return addresses, nil
+	return addressesR, nil
+}
+
+func (r addressRepository) findAddressWithUser(AddressId uint64) (domain.Address, error) {
+	var address addressWithUser
+	err := r.coll.Session().SQL().Select("addresses.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+		From("addresses").
+		Where(db.Cond{"addresses.id": AddressId, "addresses.deleted_date": nil}).
+		Join("users as u").On("u.id = addresses.user_id").One(&address)
+	if err != nil {
+		return domain.Address{}, err
+	}
+
+	return r.mapModelToDomain(address.Address, user{Id: address.UserId, Name: address.UserName, Email: address.UserEmail}), nil
 }
 
 func (r addressRepository) mapDomainToModel(m domain.Address) address {
 	return address{
 		ID:          m.ID,
-		UserID:      m.UserID,
+		UserID:      m.User.Id,
 		Title:       m.Title,
 		City:        m.City,
 		Country:     m.Country,
@@ -114,10 +155,10 @@ func (r addressRepository) mapDomainToModel(m domain.Address) address {
 	}
 }
 
-func (r addressRepository) mapModelToDomain(m address) domain.Address {
+func (r addressRepository) mapModelToDomain(m address, u user) domain.Address {
 	return domain.Address{
 		ID:          m.ID,
-		UserID:      m.UserID,
+		User:        mapModelToDomainUser(u),
 		Title:       m.Title,
 		City:        m.City,
 		Country:     m.Country,
@@ -128,12 +169,4 @@ func (r addressRepository) mapModelToDomain(m address) domain.Address {
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
 	}
-}
-
-func (r addressRepository) mapModelSliceToDomainAddress(addresses []address) domain.Addresses {
-	newAddresses := make([]domain.Address, len(addresses))
-	for i, addr := range addresses {
-		newAddresses[i] = r.mapModelToDomain(addr)
-	}
-	return domain.Addresses{Items: newAddresses}
 }

@@ -5,7 +5,7 @@ import "time"
 // Address представляє структуру для адреси.
 type Address struct {
 	ID          uint64
-	UserID      uint64
+	User        User
 	Title       string
 	City        string
 	Country     string
@@ -26,5 +26,5 @@ type Addresses struct {
 }
 
 func (a Address) GetUserId() uint64 {
-	return a.UserID
+	return a.User.Id
 }

@@ -80,8 +80,8 @@ func (as AddressServiceImpl) FindAll(p domain.Pagination) (domain.Addresses, err
 func (s AddressServiceImpl) Find(id uint64) (interface{}, error) {
 	f, err := s.addressRepo.Read(id)
 	if err != nil {
-		log.Printf("FarmService -> Find: %s", err)
-		return domain.Farm{}, err
+		log.Printf("AddressService -> Find: %s", err)
+		return domain.Address{}, err
 	}
 	return f, err
 }
