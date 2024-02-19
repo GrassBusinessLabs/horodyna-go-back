@@ -54,7 +54,7 @@ func Router(cont container.Container) http.Handler {
 
 				UserRouter(apiRouter, cont.UserController)
 				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
-				OfferRouter(apiRouter, cont.OfferController, cont.OfferService)
+				OfferRouter(apiRouter, cont.OfferController, cont.OfferService, cont.ImageModelService)
 				OrderRouter(apiRouter, cont.OrderController, cont.OrderService)
 				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
 				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
@@ -198,9 +198,10 @@ func FarmRouter(r chi.Router, uc controllers.FarmController, fs app.FarmService)
 	})
 }
 
-func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferService) {
+func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferService, is app.ImageModelService) {
 
 	pathObjectMiddleware := middlewares.PathObject("offerId", controllers.OfferKey, os)
+	imagePathObjectMiddleware := middlewares.PathObject("imageId", controllers.ImageKey, is)
 	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Offer](controllers.OfferKey)
 
 	r.Route("/offers", func(apiRouter chi.Router) {
@@ -215,6 +216,14 @@ func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferServi
 		apiRouter.Get(
 			"/by-farmid/{farmId}",
 			oc.FindByFarmId(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Post(
+			"/additional-image/{offerId}",
+			oc.AddAdditionalImage(),
+		)
+		apiRouter.With(pathObjectMiddleware, imagePathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/additional-image/{offerId}/{imageId}",
+			oc.DeleteAdditionalImage(),
 		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{offerId}",

@@ -82,7 +82,18 @@ func (s imageModelService) FindById(id uint64) (domain.Image, error) {
 }
 
 func (s imageModelService) Delete(id uint64) error {
-	err := s.imageMRepo.Delete(id)
+	image, err := s.imageMRepo.FindById(id)
+	if err != nil {
+		log.Printf("ImageModelService: %s", err)
+		return err
+	}
+
+	err = s.imageServ.RemoveImage(image.Name)
+	if err != nil {
+		log.Printf("OfferService: %s", err)
+	}
+
+	err = s.imageMRepo.Delete(id)
 	if err != nil {
 		log.Printf("ImageModelService: %s", err)
 		return err

@@ -15,7 +15,7 @@ type PointsRequest struct {
 }
 
 type FarmRequest struct {
-	Name      string  `json:"name" validate:"required,gte=1,max=40"`
+	Name      *string `json:"name"`
 	City      string  `json:"city" validate:"required"`
 	Address   string  `json:"address" validate:"required"`
 	Latitude  float64 `json:"latitude" validate:"required"`

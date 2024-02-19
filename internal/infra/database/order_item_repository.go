@@ -240,7 +240,7 @@ func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.
 	for i, oi := range orderItems {
 		orderItem := r.mapModelToDomainWithoutOrder(oi.OrderItem, farm{
 			Id:      oi.FarmId,
-			Name:    oi.Name,
+			Name:    &oi.Name,
 			City:    oi.City,
 			Address: oi.Address,
 			UserId:  oi.UserId,

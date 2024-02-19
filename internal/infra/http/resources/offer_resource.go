@@ -1,22 +1,24 @@
 package resources
 
 import (
+	"boilerplate/internal/app"
 	"boilerplate/internal/domain"
 	"math"
 )
 
 type OfferDto struct {
-	Id          uint64  `json:"id"`
-	Title       string  `json:"title"`
-	Description string  `json:"description"`
-	Category    string  `json:"category"`
-	Price       float64 `json:"price"`
-	Unit        string  `json:"unit"`
-	Stock       uint    `json:"stock"`
-	Status      bool    `json:"status"`
-	Cover       string  `json:"image"`
-	User        UserDto `json:"user"`
-	FarmId      uint64  `json:"farm_id"`
+	Id               uint64      `json:"id"`
+	Title            string      `json:"title"`
+	Description      string      `json:"description"`
+	Category         string      `json:"category"`
+	Price            float64     `json:"price"`
+	Unit             string      `json:"unit"`
+	Stock            uint        `json:"stock"`
+	Status           bool        `json:"status"`
+	Cover            string      `json:"image"`
+	AdditionalImages []ImageMDto `json:"additional_images"`
+	User             UserDto     `json:"user"`
+	FarmId           uint64      `json:"farm_id"`
 }
 
 type OffersDto struct {
@@ -25,27 +27,29 @@ type OffersDto struct {
 	Total uint64     `json:"total"`
 }
 
-func (d OfferDto) DomainToDto(offer domain.Offer) OfferDto {
+func (d OfferDto) DomainToDto(offer domain.Offer, imageModelService app.ImageModelService, imageMDto ImageMDto) OfferDto {
+	additionalImages, _ := imageModelService.FindAll("offers", offer.Id)
 	return OfferDto{
-		Id:          offer.Id,
-		Title:       offer.Title,
-		Description: offer.Description,
-		Category:    offer.Category,
-		Price:       math.Round(offer.Price*100) / 100,
-		Unit:        offer.Unit,
-		Stock:       offer.Stock,
-		Cover:       offer.Cover.Name,
-		Status:      offer.Status,
-		FarmId:      offer.Farm.Id,
-		User:        UserDto{}.DomainToDto(offer.User),
+		Id:               offer.Id,
+		Title:            offer.Title,
+		Description:      offer.Description,
+		Category:         offer.Category,
+		Price:            math.Round(offer.Price*100) / 100,
+		Unit:             offer.Unit,
+		Stock:            offer.Stock,
+		Cover:            offer.Cover.Name,
+		AdditionalImages: imageMDto.DomainToDtoMass(additionalImages).Items,
+		Status:           offer.Status,
+		FarmId:           offer.Farm.Id,
+		User:             UserDto{}.DomainToDto(offer.User),
 	}
 }
 
-func (d OfferDto) DomainToDtoPaginatedCollection(offers domain.Offers) OffersDto {
+func (d OfferDto) DomainToDtoPaginatedCollection(offers domain.Offers, imageModelService app.ImageModelService, imageMDto ImageMDto) OffersDto {
 	result := make([]OfferDto, len(offers.Items))
 
 	for i := range offers.Items {
-		result[i] = d.DomainToDto(offers.Items[i])
+		result[i] = d.DomainToDto(offers.Items[i], imageModelService, imageMDto)
 	}
 
 	return OffersDto{Items: result, Pages: offers.Pages, Total: offers.Total}

@@ -17,7 +17,7 @@ type Points struct {
 
 type Farm struct {
 	Id          uint64
-	Name        string
+	Name        *string
 	City        string
 	Address     string
 	UserId      uint64

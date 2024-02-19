@@ -62,8 +62,8 @@ func (s offerService) Save(offer domain.Offer) (domain.Offer, error) {
 	return o, err
 }
 
-func (os offerService) FindById(id uint64) (domain.Offer, error) {
-	offer, err := os.offerRepo.FindById(id)
+func (s offerService) FindById(id uint64) (domain.Offer, error) {
+	offer, err := s.offerRepo.FindById(id)
 	if err != nil {
 		log.Printf("OfferService: %s", err)
 		return domain.Offer{}, err

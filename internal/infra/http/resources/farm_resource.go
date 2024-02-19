@@ -8,7 +8,7 @@ import (
 
 type FarmDto struct {
 	Id        uint64  `json:"id"`
-	Name      string  `json:"name"`
+	Name      *string `json:"name"`
 	City      string  `json:"city"`
 	Address   string  `json:"address"`
 	Latitude  float64 `json:"latitude"`
@@ -18,7 +18,7 @@ type FarmDto struct {
 
 type FarmWithOutDto struct {
 	Id        uint64  `json:"id"`
-	Name      string  `json:"name"`
+	Name      *string `json:"name"`
 	City      string  `json:"city"`
 	Address   string  `json:"address"`
 	Latitude  float64 `json:"latitude"`

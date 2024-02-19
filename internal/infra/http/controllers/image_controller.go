@@ -25,12 +25,12 @@ func (c ImageModelController) FindAll() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		entityStr := r.URL.Query().Get("entity")
 		if entityStr == "" {
-			BadRequest(w, errors.New("Parameter entity is required!"))
+			BadRequest(w, errors.New("parameter entity is required"))
 			return
 		}
 		idStr := r.URL.Query().Get("id")
 		if idStr == "" {
-			BadRequest(w, errors.New("Parameter id is required!"))
+			BadRequest(w, errors.New("parameter id is required"))
 			return
 		}
 		id, err := strconv.ParseUint(idStr, 10, 64)

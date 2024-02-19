@@ -12,7 +12,7 @@ const FarmsTableName = "farms"
 
 type farm struct {
 	Id          uint64     `db:"id,omitempty"`
-	Name        string     `db:"name"`
+	Name        *string    `db:"name"`
 	City        string     `db:"city"`
 	Address     string     `db:"address"`
 	UserId      uint64     `db:"user_id"`
@@ -134,6 +134,31 @@ func (r farmRepository) FindAllByCoords(points domain.Points, p domain.Paginatio
 	farms.Total = totalCount
 	farms.Pages = uint(math.Ceil(float64(farms.Total) / float64(p.CountPerPage)))
 	return farms, nil
+}
+
+func (r farmRepository) GetAllImages(farmId uint64) ([]domain.Image, error) {
+	var offers []offer
+	var offersId []uint64
+	var coverImages []image
+	var additionalImages []image
+	offersQuery := r.coll.Session().SQL().Select("*").From("offers").Where("farm_id = ?", farmId)
+	err := offersQuery.All(&offers)
+	if err != nil {
+		return []domain.Image{}, err
+	}
+
+	for _, offer := range offers {
+		offersId = append(offersId, offer.Id)
+		coverImages = append(coverImages, image{Name: offer.Cover})
+	}
+
+	imagesQuery := r.coll.Session().SQL().Select("*").From("images").Where("entity = ? AND entity_id IN ?", "offers", offersId)
+	err = imagesQuery.All(&additionalImages)
+	if err != nil {
+		return []domain.Image{}, err
+	}
+
+	return append(coverImages, additionalImages...), nil
 }
 
 func (r farmRepository) mapDomainToModel(m domain.Farm) farm {

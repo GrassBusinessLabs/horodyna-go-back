@@ -14,14 +14,16 @@ import (
 )
 
 type OfferController struct {
-	offerService app.OfferService
-	farmService  app.FarmService
+	offerService      app.OfferService
+	farmService       app.FarmService
+	imageModelService app.ImageModelService
 }
 
-func NewOfferController(os app.OfferService, fr app.FarmService) OfferController {
+func NewOfferController(os app.OfferService, fr app.FarmService, ims app.ImageModelService) OfferController {
 	return OfferController{
-		offerService: os,
-		farmService:  fr,
+		offerService:      os,
+		farmService:       fr,
+		imageModelService: ims,
 	}
 }
 
@@ -44,7 +46,7 @@ func (c OfferController) Save() http.HandlerFunc {
 			return
 		}
 		if farm.GetUserId() != u.Id {
-			err := errors.New("User is not a farm owner.")
+			err := errors.New("user is not a farm owner")
 			log.Printf("OfferController: %s", err)
 			BadRequest(w, err)
 			return
@@ -58,7 +60,7 @@ func (c OfferController) Save() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.OfferDto{}.DomainToDto(offer))
+		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService, resources.ImageMDto{}))
 	}
 }
 
@@ -84,14 +86,14 @@ func (c OfferController) FindByFarmId() http.HandlerFunc {
 			BadRequest(w, err)
 			return
 		}
-		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers))
+		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers, c.imageModelService, resources.ImageMDto{}))
 	}
 }
 
 func (c OfferController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OfferKey).(domain.Offer)
-		Success(w, resources.OfferDto{}.DomainToDto(o))
+		Success(w, resources.OfferDto{}.DomainToDto(o, c.imageModelService, resources.ImageMDto{}))
 	}
 }
 
@@ -117,7 +119,7 @@ func (c OfferController) ListView() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers))
+		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers, c.imageModelService, resources.ImageMDto{}))
 	}
 }
 
@@ -138,7 +140,7 @@ func (c OfferController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OfferDto{}.DomainToDto(newOffer))
+		Success(w, resources.OfferDto{}.DomainToDto(newOffer, c.imageModelService, resources.ImageMDto{}))
 	}
 }
 
@@ -153,5 +155,43 @@ func (c OfferController) Delete() http.HandlerFunc {
 		}
 
 		Ok(w)
+	}
+}
+
+func (c OfferController) AddAdditionalImage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		offer := r.Context().Value(OfferKey).(domain.Offer)
+		image, err := requests.Bind(r, requests.ImageRequest{}, domain.Image{})
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		image.Entity = "offers"
+		image.EntityId = offer.Id
+		image, err = c.imageModelService.Save(image)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService, resources.ImageMDto{}))
+	}
+}
+
+func (c OfferController) DeleteAdditionalImage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		offer := r.Context().Value(OfferKey).(domain.Offer)
+		image := r.Context().Value(ImageKey).(domain.Image)
+		err := c.imageModelService.Delete(image.Id)
+		if err != nil {
+			log.Printf("OfferController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService, resources.ImageMDto{}))
 	}
 }
