@@ -23,6 +23,7 @@ type Farm struct {
 	User        User
 	Longitude   float64
 	Latitude    float64
+	AllImages   []Image
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate *time.Time

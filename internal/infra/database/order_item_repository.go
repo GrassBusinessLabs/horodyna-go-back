@@ -111,10 +111,10 @@ func (r orderItemRepository) PrepareAllToSave(ords []domain.OrderItem, orderUser
 		}
 
 		if offer.Stock < uint(item.Amount) {
-			return []orderItem{}, 0, errors.New("The orderitem amount can`t be more than in offer.")
+			return []orderItem{}, 0, errors.New("the orderitem amount can`t be more than in offer")
 		}
 		if offer.User.Id == orderUserId {
-			return []orderItem{}, 0, errors.New("The owner of the offer can`t buy his products.")
+			return []orderItem{}, 0, errors.New("the owner of the offer can`t buy his products")
 		}
 
 		item.Title = offer.Title
@@ -141,11 +141,11 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	}
 
 	if offer.Stock < uint(ords.Amount) {
-		return domain.OrderItem{}, errors.New("The orderitem amount can`t be more than in offer.")
+		return domain.OrderItem{}, errors.New("the orderitem amount can`t be more than in offer")
 	}
 	exists, err := r.coll.Find(db.Cond{"order_id": orderId, "offer_id": ords.OfferId, "deleted_date": nil}).Exists()
 	if err == nil && exists {
-		return domain.OrderItem{}, errors.New("The order already have an offer with this id.")
+		return domain.OrderItem{}, errors.New("the order already have an offer with this id")
 	}
 
 	ords.Title = offer.Title
@@ -191,7 +191,7 @@ func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, er
 	}
 
 	if offer.Stock < uint(ords.Amount) {
-		return domain.OrderItem{}, errors.New("The orderitem amount can`t be more than in offer.")
+		return domain.OrderItem{}, errors.New("the orderitem amount can`t be more than in offer")
 	}
 
 	o := r.mapDomainToModel(ords)

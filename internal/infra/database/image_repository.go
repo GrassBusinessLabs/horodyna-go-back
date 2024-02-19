@@ -39,7 +39,7 @@ func (r imageRepository) Save(imageM domain.Image) (domain.Image, error) {
 	if err != nil {
 		return domain.Image{}, err
 	}
-	return r.mapModelToDomain(i), nil
+	return mapImageModelToDomain(i), nil
 }
 
 func (r imageRepository) FindAll(entity string, id uint64) ([]domain.Image, error) {
@@ -51,7 +51,7 @@ func (r imageRepository) FindAll(entity string, id uint64) ([]domain.Image, erro
 
 	domainImages := make([]domain.Image, len(imgs))
 	for i, item := range imgs {
-		domainImages[i] = r.mapModelToDomain(item)
+		domainImages[i] = mapImageModelToDomain(item)
 	}
 	return domainImages, nil
 }
@@ -62,7 +62,7 @@ func (r imageRepository) FindById(id uint64) (domain.Image, error) {
 	if err != nil {
 		return domain.Image{}, err
 	}
-	return r.mapModelToDomain(im), nil
+	return mapImageModelToDomain(im), nil
 
 }
 
@@ -83,11 +83,19 @@ func (r imageRepository) mapDomainToModel(d domain.Image) image {
 	}
 }
 
-func (r imageRepository) mapModelToDomain(m image) domain.Image {
+func mapImageModelToDomain(m image) domain.Image {
 	return domain.Image{
 		Id:       m.Id,
 		Name:     m.Name,
 		Entity:   m.Entity,
 		EntityId: m.EntityId,
 	}
+}
+
+func mapImageModelToDomainList(images []image) []domain.Image {
+	domainImages := make([]domain.Image, len(images))
+	for i, item := range images {
+		domainImages[i] = mapImageModelToDomain(item)
+	}
+	return domainImages
 }

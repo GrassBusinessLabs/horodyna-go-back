@@ -36,7 +36,7 @@ func (c OrderItemController) AddItem() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.OrderItemDto{}.DomainToDto(orderI))
+		Created(w, resources.OrderItemDto{}.DomainToDto(orderI, resources.ImageMDto{}))
 	}
 }
 
@@ -57,7 +57,7 @@ func (c OrderItemController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderItemDto{}.DomainToDto(newOrder))
+		Success(w, resources.OrderItemDto{}.DomainToDto(newOrder, resources.ImageMDto{}))
 	}
 }
 

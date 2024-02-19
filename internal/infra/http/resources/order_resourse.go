@@ -36,10 +36,10 @@ type OrdersDto struct {
 	Total uint64     `json:"total"`
 }
 
-func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.OrderItem) OrderDtoWithOrderItems {
+func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.OrderItem, imageDto ImageMDto) OrderDtoWithOrderItems {
 	orderItems := make([]OrderItemDto, len(ori))
 	for i, item := range ori {
-		orderItems[i] = OrderItemDto{}.DomainToDto(item)
+		orderItems[i] = OrderItemDto{}.DomainToDto(item, imageDto)
 	}
 
 	return OrderDtoWithOrderItems{

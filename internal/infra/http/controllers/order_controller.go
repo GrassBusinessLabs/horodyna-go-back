@@ -53,7 +53,7 @@ func (c OrderController) FindById() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(o, orderItems))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(o, orderItems, resources.ImageMDto{}))
 	}
 }
 

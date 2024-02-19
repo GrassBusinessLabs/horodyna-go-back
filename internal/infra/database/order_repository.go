@@ -50,7 +50,7 @@ func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	o := r.mapDomainToModel(order)
 	exists, err := r.coll.Find(db.Cond{"deleted_date": nil, "status": domain.DRAFT, "user_id": order.UserId}).Exists()
 	if err != nil || exists {
-		return domain.Order{}, errors.New("User already have an order in DRAFT status.")
+		return domain.Order{}, errors.New("user already have an order in DRAFT status")
 	}
 	ordrItmsModel, ProdPrice, err := r.orderItemRepo.PrepareAllToSave(order.OrderItems, o.UserId)
 	if err != nil {

@@ -162,7 +162,7 @@ func (r farmRepository) findFarmWithUser(farmId uint64) (domain.Farm, error) {
 	return r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail}), nil
 }
 
-func (r farmRepository) GetAllImages(farmId uint64) ([]domain.Image, error) {
+func (r farmRepository) GetAllImages(farmId uint64) []domain.Image {
 	var offers []offer
 	var offersId []uint64
 	var coverImages []image
@@ -170,7 +170,7 @@ func (r farmRepository) GetAllImages(farmId uint64) ([]domain.Image, error) {
 	offersQuery := r.coll.Session().SQL().Select("*").From("offers").Where("farm_id = ?", farmId)
 	err := offersQuery.All(&offers)
 	if err != nil {
-		return []domain.Image{}, err
+		return []domain.Image{}
 	}
 
 	for _, offer := range offers {
@@ -181,10 +181,10 @@ func (r farmRepository) GetAllImages(farmId uint64) ([]domain.Image, error) {
 	imagesQuery := r.coll.Session().SQL().Select("*").From("images").Where("entity = ? AND entity_id IN ?", "offers", offersId)
 	err = imagesQuery.All(&additionalImages)
 	if err != nil {
-		return []domain.Image{}, err
+		return []domain.Image{}
 	}
 
-	return append(coverImages, additionalImages...), nil
+	return mapImageModelToDomainList(append(coverImages, additionalImages...))
 }
 
 func (r farmRepository) mapDomainToModel(m domain.Farm) farm {
@@ -212,6 +212,7 @@ func (r farmRepository) mapModelToDomain(m farm, u user) domain.Farm {
 		User:        mapModelToDomainUser(u),
 		Latitude:    m.Latitude,
 		Longitude:   m.Longitude,
+		AllImages:   r.GetAllImages(m.Id),
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
 	}

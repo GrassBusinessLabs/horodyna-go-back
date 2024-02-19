@@ -41,7 +41,7 @@ func (c FarmController) FindAllByCoords() http.HandlerFunc {
 			InternalServerError(w, err)
 			return
 		}
-		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms))
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, resources.ImageMDto{}))
 	}
 }
 
@@ -63,14 +63,14 @@ func (c FarmController) Save() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.FarmDto{}.DomainToDto(farm))
+		Created(w, resources.FarmDto{}.DomainToDto(farm, resources.ImageMDto{}))
 	}
 }
 
 func (c FarmController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(FarmKey).(domain.Farm)
-		Success(w, resources.FarmDto{}.DomainToDto(f))
+		Success(w, resources.FarmDto{}.DomainToDto(f, resources.ImageMDto{}))
 	}
 }
 
@@ -93,7 +93,7 @@ func (c FarmController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.FarmDto{}.DomainToDto(newfarm))
+		Success(w, resources.FarmDto{}.DomainToDto(newfarm, resources.ImageMDto{}))
 	}
 }
 
@@ -127,6 +127,6 @@ func (c FarmController) ListView() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms))
+		Success(w, resources.FarmDto{}.DomainToDtoPaginatedCollection(farms, resources.ImageMDto{}))
 	}
 }

@@ -5,20 +5,21 @@ import (
 )
 
 type Offer struct {
-	Id          uint64
-	Title       string
-	Description string
-	Category    string
-	Price       float64
-	Unit        string
-	Stock       uint
-	Status      bool
-	User        User
-	Farm        Farm
-	Cover       Image
-	CreatedDate time.Time
-	UpdatedDate time.Time
-	DeletedDate *time.Time
+	Id               uint64
+	Title            string
+	Description      string
+	Category         string
+	Price            float64
+	Unit             string
+	Stock            uint
+	Status           bool
+	User             User
+	Farm             Farm
+	Cover            Image
+	AdditionalImages []Image
+	CreatedDate      time.Time
+	UpdatedDate      time.Time
+	DeletedDate      *time.Time
 }
 
 type Offers struct {

@@ -115,7 +115,7 @@ func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (do
 	var data []offerWithUser
 	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
 		From("offers AS ofr").
-		Where(" ofr.farm_id = ? AND ofr.status = true AND ofr.deleted_date IS NULL", farmId).
+		Where(" ofr.farm_id = ? AND ofr.deleted_date IS NULL", farmId).
 		Join("users AS u").On("u.id = ofr.user_id")
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
@@ -161,7 +161,7 @@ func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.
 
 func (r offerRepository) FindByCategory(category string) ([]domain.Offer, error) {
 	var data []offer
-	query := r.coll.Find(db.Cond{"status": true, "deleted_date": nil})
+	query := r.coll.Find(db.Cond{"deleted_date": nil})
 	if category != "" {
 		query = query.And(db.Cond{"category": category})
 	}
@@ -220,21 +220,28 @@ func (r offerRepository) mapDomainToModel(d domain.Offer) offer {
 }
 
 func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
+	var additionalImages []image
+	additionalImagesQuery := r.coll.Session().SQL().Select("*").From("images").Where("entity = ? AND entity_id = ?", "offers", o.Id)
+	err := additionalImagesQuery.All(&additionalImages)
+	if err != nil {
+		return domain.Offer{}
+	}
 	return domain.Offer{
-		Id:          o.Id,
-		Title:       o.Title,
-		Description: o.Description,
-		Category:    o.Category,
-		Price:       o.Price,
-		Unit:        o.Unit,
-		Stock:       o.Stock,
-		Cover:       domain.Image{Name: o.Cover},
-		Status:      o.Status,
-		User:        domain.User{Id: o.UserId},
-		Farm:        domain.Farm{Id: o.FarmId},
-		CreatedDate: o.CreatedDate,
-		UpdatedDate: o.UpdatedDate,
-		DeletedDate: o.DeletedDate,
+		Id:               o.Id,
+		Title:            o.Title,
+		Description:      o.Description,
+		Category:         o.Category,
+		Price:            o.Price,
+		Unit:             o.Unit,
+		Stock:            o.Stock,
+		Cover:            domain.Image{Name: o.Cover},
+		AdditionalImages: mapImageModelToDomainList(additionalImages),
+		Status:           o.Status,
+		User:             domain.User{Id: o.UserId},
+		Farm:             domain.Farm{Id: o.FarmId},
+		CreatedDate:      o.CreatedDate,
+		UpdatedDate:      o.UpdatedDate,
+		DeletedDate:      o.DeletedDate,
 	}
 }
 

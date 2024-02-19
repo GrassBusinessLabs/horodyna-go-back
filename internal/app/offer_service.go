@@ -18,16 +18,18 @@ type OfferService interface {
 	FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error)
 }
 
-func NewOfferService(or database.OfferRepository, fs filesystem.ImageStorageService) OfferService {
+func NewOfferService(or database.OfferRepository, fs filesystem.ImageStorageService, ims ImageModelService) OfferService {
 	return offerService{
-		offerRepo:    or,
-		imageService: fs,
+		offerRepo:         or,
+		imageService:      fs,
+		imageModelService: ims,
 	}
 }
 
 type offerService struct {
-	offerRepo    database.OfferRepository
-	imageService filesystem.ImageStorageService
+	offerRepo         database.OfferRepository
+	imageService      filesystem.ImageStorageService
+	imageModelService ImageModelService
 }
 
 func (s offerService) Find(id uint64) (interface{}, error) {
