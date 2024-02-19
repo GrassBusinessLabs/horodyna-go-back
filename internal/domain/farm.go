@@ -20,7 +20,7 @@ type Farm struct {
 	Name        *string
 	City        string
 	Address     string
-	UserId      uint64
+	User        User
 	Longitude   float64
 	Latitude    float64
 	CreatedDate time.Time
@@ -35,5 +35,5 @@ type Farms struct {
 }
 
 func (f Farm) GetUserId() uint64 {
-	return f.UserId
+	return f.User.Id
 }

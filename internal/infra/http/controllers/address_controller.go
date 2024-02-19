@@ -11,13 +11,11 @@ import (
 
 type AddressController struct {
 	addresservice app.AddressService
-	userService   app.UserService
 }
 
-func NewAddressController(fr app.AddressService, us app.UserService) AddressController {
+func NewAddressController(fr app.AddressService) AddressController {
 	return AddressController{
 		addresservice: fr,
-		userService:   us,
 	}
 }
 
@@ -32,7 +30,7 @@ func (c AddressController) Create() http.HandlerFunc {
 			return
 		}
 
-		address.UserID = u.Id
+		address.User.Id = u.Id
 		address, err = c.addresservice.Create(address)
 		if err != nil {
 			log.Printf("AddressController: %s", err)
@@ -40,14 +38,14 @@ func (c AddressController) Create() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.AddressDto{}.DomainToDto(address, c.userService))
+		Created(w, resources.AddressDto{}.DomainToDto(address))
 	}
 }
 
 func (c AddressController) Read() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		f := r.Context().Value(AddressKey).(domain.Address)
-		Success(w, resources.AddressDto{}.DomainToDto(f, c.userService))
+		Success(w, resources.AddressDto{}.DomainToDto(f))
 	}
 }
 
@@ -81,7 +79,7 @@ func (c AddressController) FindAll() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.AddressDto{}.DomainToDtoPaginatedCollection(address, pagination, c.userService))
+		Success(w, resources.AddressDto{}.DomainToDtoPaginatedCollection(address, pagination))
 	}
 }
 
@@ -96,7 +94,7 @@ func (c AddressController) Update() http.HandlerFunc {
 		}
 
 		address.ID = f.ID
-		address.UserID = f.UserID
+		address.User.Id = f.User.Id
 		newAddress, err := c.addresservice.Update(address)
 		if err != nil {
 			log.Printf("AddressController: %s", err)
@@ -104,6 +102,6 @@ func (c AddressController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.AddressDto{}.DomainToDto(newAddress, c.userService))
+		Success(w, resources.AddressDto{}.DomainToDto(newAddress))
 	}
 }

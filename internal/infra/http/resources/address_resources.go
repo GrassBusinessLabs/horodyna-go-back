@@ -1,9 +1,7 @@
 package resources
 
 import (
-	"boilerplate/internal/app"
 	"boilerplate/internal/domain"
-	"log"
 )
 
 type AddressDto struct {
@@ -23,12 +21,7 @@ type AddressesDto struct {
 	Total uint64       `json:"total"`
 }
 
-func (d AddressDto) DomainToDto(address domain.Address, userService app.UserService) AddressDto {
-	user, err := userService.FindById(address.UserID)
-	if err != nil {
-		log.Println(err)
-	}
-
+func (d AddressDto) DomainToDto(address domain.Address) AddressDto {
 	return AddressDto{
 		Id:      address.ID,
 		Title:   address.Title,
@@ -37,15 +30,15 @@ func (d AddressDto) DomainToDto(address domain.Address, userService app.UserServ
 		Address: address.Address,
 		Lat:     address.Lat,
 		Lon:     address.Lon,
-		User:    UserDto{}.DomainToDto(user),
+		User:    UserDto{}.DomainToDto(address.User),
 	}
 }
 
-func (d AddressDto) DomainToDtoPaginatedCollection(addresses domain.Addresses, pag domain.Pagination, us app.UserService) AddressesDto {
+func (d AddressDto) DomainToDtoPaginatedCollection(addresses domain.Addresses, pag domain.Pagination) AddressesDto {
 	result := make([]AddressDto, len(addresses.Items))
 
 	for i := range addresses.Items {
-		result[i] = d.DomainToDto(addresses.Items[i], us)
+		result[i] = d.DomainToDto(addresses.Items[i])
 	}
 
 	return AddressesDto{Items: result, Pages: addresses.Pages, Total: addresses.Total}

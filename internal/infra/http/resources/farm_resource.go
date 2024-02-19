@@ -1,9 +1,7 @@
 package resources
 
 import (
-	"boilerplate/internal/app"
 	"boilerplate/internal/domain"
-	"log"
 )
 
 type FarmDto struct {
@@ -32,12 +30,7 @@ type FarmsDto struct {
 	Total uint64    `json:"total"`
 }
 
-func (d FarmDto) DomainToDto(farm domain.Farm, us app.UserService) FarmDto {
-	user, err := us.FindById(farm.UserId)
-	if err != nil {
-		log.Println(err)
-	}
-
+func (d FarmDto) DomainToDto(farm domain.Farm) FarmDto {
 	return FarmDto{
 		Id:        farm.Id,
 		Name:      farm.Name,
@@ -45,7 +38,7 @@ func (d FarmDto) DomainToDto(farm domain.Farm, us app.UserService) FarmDto {
 		Address:   farm.Address,
 		Latitude:  farm.Latitude,
 		Longitude: farm.Longitude,
-		User:      UserDto{}.DomainToDto(user),
+		User:      UserDto{}.DomainToDto(farm.User),
 	}
 }
 
@@ -58,15 +51,15 @@ func (d FarmWithOutDto) DomainToDto(farm domain.Farm) FarmWithOutDto {
 		Address:   farm.Address,
 		Latitude:  farm.Latitude,
 		Longitude: farm.Longitude,
-		UserId:    farm.UserId,
+		UserId:    farm.User.Id,
 	}
 }
 
-func (d FarmDto) DomainToDtoPaginatedCollection(farms domain.Farms, us app.UserService) FarmsDto {
+func (d FarmDto) DomainToDtoPaginatedCollection(farms domain.Farms) FarmsDto {
 	result := make([]FarmDto, len(farms.Items))
 
 	for i := range farms.Items {
-		result[i] = d.DomainToDto(farms.Items[i], us)
+		result[i] = d.DomainToDto(farms.Items[i])
 	}
 
 	return FarmsDto{Items: result, Pages: farms.Pages, Total: farms.Total}
