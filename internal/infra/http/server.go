@@ -9,7 +9,7 @@ import (
 
 func Server(ctx context.Context, router http.Handler) error {
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%d", 8080),
+		Addr:    fmt.Sprintf(":%d", 8000),
 		Handler: router,
 	}
 
