@@ -13,6 +13,7 @@ type OrderService interface {
 	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(o domain.Order) error
 	Find(uint64) (interface{}, error)
+	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
 }
 
 func NewOrderService(or database.OrderRepository) OrderService {
@@ -91,4 +92,14 @@ func (s orderService) Delete(order domain.Order) error {
 	}
 
 	return nil
+}
+
+func (s orderService) FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error) {
+	orders, err := s.orderRepo.FindByFarmUserId(farmUserId, p)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return domain.Orders{}, err
+	}
+
+	return orders, nil
 }

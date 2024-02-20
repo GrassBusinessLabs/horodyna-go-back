@@ -32,6 +32,7 @@ type OrderRepository interface {
 	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
+	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
 }
 
 type orderRepository struct {
@@ -175,6 +176,49 @@ func (r orderRepository) Recalculate(orderId uint64) error {
 	}
 
 	return nil
+}
+
+func (r orderRepository) FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error) {
+	var farmsId []uint64
+	var offersId []uint64
+	var ordersId []uint64
+	var orders []order
+	err := r.coll.Session().SQL().Select("id").From("farms").Where("user_id = ?", farmUserId).All(&farmsId)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	err = r.coll.Session().SQL().Select("id").From("offers").Where("farm_id IN ?", farmsId).All(&offersId)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	err = r.coll.Session().SQL().Select("order_id").From("order_items").Where("offer_id IN ?", offersId).All(&ordersId)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	err = r.coll.Session().SQL().Select("*").From("orders").Where("id IN ?", ordersId).All(&orders)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	paginatedOrders := r.mapModelToDomainPagination(orders)
+	if err != nil {
+		return domain.Orders{}, err
+	}
+
+	for i, item := range paginatedOrders.Items {
+		count, err := r.orderItemRepo.Count(item.Id)
+		if err != nil {
+			return domain.Orders{}, err
+		}
+		paginatedOrders.Items[i].OrderItemsCount = count
+	}
+
+	paginatedOrders.Total = uint64(len(orders))
+	paginatedOrders.Pages = uint(math.Ceil(float64(paginatedOrders.Total) / float64(p.CountPerPage)))
+	return paginatedOrders, nil
 }
 
 func (r orderRepository) mapDomainToModel(o domain.Order) order {

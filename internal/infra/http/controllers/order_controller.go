@@ -48,7 +48,7 @@ func (c OrderController) FindById() http.HandlerFunc {
 		o := r.Context().Value(OrderKey).(domain.Order)
 		orderItems, err := c.orderItemService.FindAll(o.Id)
 		if err != nil {
-			log.Printf("OfferController: %s", err)
+			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
@@ -83,14 +83,14 @@ func (c OrderController) Update() http.HandlerFunc {
 		o := r.Context().Value(OrderKey).(domain.Order)
 		order, err := requests.Bind(r, requests.UpdateOrderRequest{}, domain.Order{})
 		if err != nil {
-			log.Printf("OfferController: %s", err)
+			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
 		newOrder, err := c.orderService.Update(o, order)
 		if err != nil {
-			log.Printf("OfferController: %s", err)
+			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
@@ -104,11 +104,32 @@ func (c OrderController) Delete() http.HandlerFunc {
 		o := r.Context().Value(OrderKey).(domain.Order)
 		err := c.orderService.Delete(o)
 		if err != nil {
-			log.Printf("OfferController: %s", err)
+			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
 		Ok(w)
+	}
+}
+
+func (c OrderController) FindByFarmUserId() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		u := r.Context().Value(UserKey).(domain.User)
+		pagination, err := requests.DecodePaginationQuery(r)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		orders, err := c.orderService.FindByFarmUserId(u.Id, pagination)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrderDto{}.DomainToDtoPaginatedCollection(orders))
 	}
 }

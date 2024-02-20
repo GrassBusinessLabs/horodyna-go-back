@@ -105,17 +105,13 @@ func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderServi
 	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Order](controllers.OrderKey)
 
 	r.Route("/orders", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/by-farmer",
+			oc.FindAllByUserId(),
+		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{orderId}",
 			oc.FindById(),
-		)
-		apiRouter.Get(
-			"/",
-			oc.FindAllByUserId(),
-		)
-		apiRouter.Post(
-			"/",
-			oc.Save(),
 		)
 		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
 			"/{orderId}",
@@ -124,6 +120,14 @@ func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderServi
 		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
 			"/{orderId}",
 			oc.Delete(),
+		)
+		apiRouter.Get(
+			"/",
+			oc.FindAllByUserId(),
+		)
+		apiRouter.Post(
+			"/",
+			oc.Save(),
 		)
 	})
 }
