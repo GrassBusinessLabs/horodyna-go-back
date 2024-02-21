@@ -55,7 +55,7 @@ func Router(cont container.Container) http.Handler {
 				UserRouter(apiRouter, cont.UserController)
 				FarmRouter(apiRouter, cont.FarmController, cont.FarmService)
 				OfferRouter(apiRouter, cont.OfferController, cont.OfferService, cont.ImageModelService)
-				OrderRouter(apiRouter, cont.OrderController, cont.OrderService)
+				OrderRouter(apiRouter, cont.OrderController, cont.OrderService, cont.FarmService)
 				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
 				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
 
@@ -100,11 +100,20 @@ func OrderItemRoute(r chi.Router, oc controllers.OrderItemController, os app.Ord
 	})
 }
 
-func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderService) {
+func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderService, fs app.FarmService) {
 	pathObjectMiddleware := middlewares.PathObject("orderId", controllers.OrderKey, os)
 	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Order](controllers.OrderKey)
-
+	farmPathObjectMiddleware := middlewares.PathObject("farmId", controllers.FarmKey, fs)
+	farmIsOwnerMiddleweare := middlewares.IsOwnerMiddleware[domain.Farm](controllers.FarmKey)
 	r.Route("/orders", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectMiddleware, farmPathObjectMiddleware, farmIsOwnerMiddleweare).Put(
+			"/shipping-status/{farmId}/{orderId}",
+			oc.SetShippingOrderStatus(),
+		)
+		apiRouter.With(pathObjectMiddleware, farmPathObjectMiddleware, isOwnerMiddleware).Put(
+			"/completed-status/{farmId}/{orderId}",
+			oc.SetCompletedOrderStatus(),
+		)
 		apiRouter.Get(
 			"/by-farmer",
 			oc.FindAllByUserId(),

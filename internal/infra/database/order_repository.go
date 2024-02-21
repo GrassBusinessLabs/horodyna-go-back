@@ -20,6 +20,8 @@ type order struct {
 	ShippingPrice float64    `db:"shipping_price"`
 	TotalPrice    float64    `db:"total_price"`
 	Status        string     `db:"status"`
+	PostOffice    *string    `db:"post_office"`
+	Ttn           *string    `db:"ttn"`
 	CreatedDate   time.Time  `db:"created_date,omitempty"`
 	UpdatedDate   time.Time  `db:"updated_date,omitempty"`
 	DeletedDate   *time.Time `db:"deleted_date,omitempty"`
@@ -33,6 +35,7 @@ type OrderRepository interface {
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
 	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
+	SetOrderStatus(order domain.Order) (domain.Order, error)
 }
 
 type orderRepository struct {
@@ -221,6 +224,24 @@ func (r orderRepository) FindByFarmUserId(farmUserId uint64, p domain.Pagination
 	return paginatedOrders, nil
 }
 
+func (r orderRepository) SetOrderStatus(order domain.Order) (domain.Order, error) {
+	orderInstance, err := r.FindById(order.Id)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	if order.IsOrderStatusValid(orderInstance.Status, order.Status) {
+		order, err := r.Update(order)
+		if err != nil {
+			return domain.Order{}, err
+		}
+
+		return order, nil
+	}
+
+	return domain.Order{}, errors.New("status is not valid for this order")
+}
+
 func (r orderRepository) mapDomainToModel(o domain.Order) order {
 
 	return order{
@@ -232,6 +253,8 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,
 		Status:        string(o.Status),
+		PostOffice:    o.PostOffice,
+		Ttn:           o.Ttn,
 		CreatedDate:   o.CreatedDate,
 		UpdatedDate:   o.UpdatedDate,
 		DeletedDate:   o.DeletedDate,
@@ -248,6 +271,8 @@ func (r orderRepository) mapModelToDomain(o order) domain.Order {
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,
 		Status:        domain.OrderStatus(o.Status),
+		PostOffice:    o.PostOffice,
+		Ttn:           o.Ttn,
 		OrderItems:    make([]domain.OrderItem, 0),
 		CreatedDate:   o.CreatedDate,
 		UpdatedDate:   o.UpdatedDate,
