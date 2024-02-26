@@ -248,7 +248,7 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 		Id:            o.Id,
 		Comment:       o.Comment,
 		UserId:        o.UserId,
-		AddressId:     o.AddressId,
+		AddressId:     o.Address.ID,
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,
@@ -262,11 +262,17 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 }
 
 func (r orderRepository) mapModelToDomain(o order) domain.Order {
+	var address address
+	err := r.coll.Session().SQL().Select("*").From("adresses").Where("id = ?", o.AddressId).One(&address)
+	if err != nil {
+		return domain.Order{}
+	}
+
 	return domain.Order{
 		Id:            o.Id,
 		Comment:       o.Comment,
 		UserId:        o.UserId,
-		AddressId:     o.AddressId,
+		Address:       mapModelToDomainAdress(address),
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,

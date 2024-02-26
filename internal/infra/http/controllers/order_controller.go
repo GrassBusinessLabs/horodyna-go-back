@@ -134,6 +134,21 @@ func (c OrderController) FindByFarmUserId() http.HandlerFunc {
 	}
 }
 
+func (c OrderController) SetSubmittedOrderStatus() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		orderInstance := r.Context().Value(OrderKey).(domain.Order)
+		orderInstance.Status = domain.SUBMITTED
+		order, err := c.orderService.SetOrderStatus(orderInstance)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrderDto{}.DomainToDto(order))
+	}
+}
+
 func (c OrderController) SetShippingOrderStatus() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		orderInstance := r.Context().Value(OrderKey).(domain.Order)

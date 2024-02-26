@@ -69,7 +69,7 @@ func New(conf config.Configuration) Container {
 	imageStorageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
 	imageService := app.NewImageModelService(ImageRepository, imageStorageService)
 	offerService := app.NewOfferService(offerRepository, imageStorageService, imageService)
-	orderService := app.NewOrderService(orderRepository)
+	orderService := app.NewOrderService(orderRepository, addressRepository)
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
 	addressService := app.NewAddressService(addressRepository)
 

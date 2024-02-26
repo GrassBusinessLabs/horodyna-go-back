@@ -106,6 +106,10 @@ func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderServi
 	farmPathObjectMiddleware := middlewares.PathObject("farmId", controllers.FarmKey, fs)
 	farmIsOwnerMiddleweare := middlewares.IsOwnerMiddleware[domain.Farm](controllers.FarmKey)
 	r.Route("/orders", func(apiRouter chi.Router) {
+		apiRouter.With(pathObjectMiddleware, farmPathObjectMiddleware, isOwnerMiddleware).Put(
+			"/submitted-status/{farmId}/{orderId}",
+			oc.SetShippingOrderStatus(),
+		)
 		apiRouter.With(pathObjectMiddleware, farmPathObjectMiddleware, farmIsOwnerMiddleweare).Put(
 			"/shipping-status/{farmId}/{orderId}",
 			oc.SetShippingOrderStatus(),

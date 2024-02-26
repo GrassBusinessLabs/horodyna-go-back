@@ -19,7 +19,7 @@ type Order struct {
 	Id              uint64
 	Comment         string
 	UserId          uint64
-	AddressId       uint64
+	Address         Address
 	OrderItems      []OrderItem
 	OrderItemsCount uint64
 	ProductsPrice   float64
@@ -44,10 +44,13 @@ func (o Order) GetUserId() uint64 {
 }
 
 func (o Order) IsOrderStatusValid(oldStatus OrderStatus, newStatus OrderStatus) bool {
-	if newStatus == SHIPPING {
-		return oldStatus != COMPLETED
+	if newStatus == SUBMITTED {
+		return true
+	} else if newStatus == SHIPPING {
+		return oldStatus == SUBMITTED
 	} else if newStatus == COMPLETED {
 		return oldStatus == SHIPPING
 	}
+
 	return false
 }

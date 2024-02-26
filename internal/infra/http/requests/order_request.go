@@ -6,7 +6,7 @@ import (
 
 type OrderRequest struct {
 	OrderItems    []OrderItemRequest `json:"order_items"`
-	AddressId     uint64             `json:"address_id" validate:"required"`
+	Address       AddressRequest     `json:"address" validate:"required"`
 	Comment       string             `json:"comment"`
 	ShippingPrice float64            `json:"shipping_price"`
 	PostOffice    *string            `json:"post_office"`
@@ -23,7 +23,7 @@ type UpdateOrderRequest struct {
 
 func (m UpdateOrderRequest) ToDomainModel() (interface{}, error) {
 	return domain.Order{
-		AddressId:     m.AddressId,
+		Address:       domain.Address{ID: m.AddressId},
 		Comment:       m.Comment,
 		ShippingPrice: m.ShippingPrice,
 		PostOffice:    m.PostOffice,
@@ -36,8 +36,14 @@ func (m OrderRequest) ToDomainModel() (interface{}, error) {
 	if err != nil {
 		return domain.Order{}, err
 	}
+
+	address, err := m.Address.ToDomainModel()
+	if err != nil {
+		return domain.Order{}, err
+	}
+
 	return domain.Order{
-		AddressId:     m.AddressId,
+		Address:       address.(domain.Address),
 		Comment:       m.Comment,
 		ShippingPrice: m.ShippingPrice,
 		OrderItems:    orderItems,

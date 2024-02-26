@@ -17,14 +17,16 @@ type OrderService interface {
 	SetOrderStatus(order domain.Order) (domain.Order, error)
 }
 
-func NewOrderService(or database.OrderRepository) OrderService {
+func NewOrderService(or database.OrderRepository, ar database.AddressRepository) OrderService {
 	return orderService{
-		orderRepo: or,
+		orderRepo:   or,
+		addressRepo: ar,
 	}
 }
 
 type orderService struct {
-	orderRepo database.OrderRepository
+	orderRepo   database.OrderRepository
+	addressRepo database.AddressRepository
 }
 
 func (s orderService) Find(id uint64) (interface{}, error) {
@@ -38,12 +40,20 @@ func (s orderService) Find(id uint64) (interface{}, error) {
 }
 
 func (s orderService) Save(ord domain.Order) (domain.Order, error) {
+	address, err := s.addressRepo.Create(ord.Address)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return domain.Order{}, err
+	}
+
+	ord.Address = address
 	ord.Status = domain.DRAFT
 	o, err := s.orderRepo.Save(ord)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return domain.Order{}, err
 	}
+
 	return o, err
 }
 
@@ -69,7 +79,7 @@ func (s orderService) FindAllByUserId(userId uint64, pag domain.Pagination) (dom
 }
 
 func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, error) {
-	ord.AddressId = req.AddressId
+	ord.Address = req.Address
 	ord.Comment = req.Comment
 	if ord.ShippingPrice != req.ShippingPrice {
 		ord.TotalPrice = req.ShippingPrice + ord.ProductsPrice

@@ -170,3 +170,19 @@ func (r addressRepository) mapModelToDomain(m address, u user) domain.Address {
 		DeletedDate: m.DeletedDate,
 	}
 }
+
+func mapModelToDomainAdress(m address) domain.Address {
+	return domain.Address{
+		ID:          m.ID,
+		User:        domain.User{Id: m.UserID},
+		Title:       m.Title,
+		City:        m.City,
+		Country:     m.Country,
+		Address:     m.Address,
+		Lat:         m.Lat,
+		Lon:         m.Lon,
+		CreatedDate: m.CreatedDate,
+		UpdatedDate: m.UpdatedDate,
+		DeletedDate: m.DeletedDate,
+	}
+}
