@@ -32,6 +32,7 @@ func (c OrderController) Save() http.HandlerFunc {
 		}
 
 		order.UserId = u.Id
+		order.Address.User.Id = u.Id
 		order, err = c.orderService.Save(order)
 		if err != nil {
 			log.Printf("OrderController: %s", err)
