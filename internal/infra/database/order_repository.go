@@ -35,7 +35,6 @@ type OrderRepository interface {
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
 	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
-	SetOrderStatus(order domain.Order) (domain.Order, error)
 }
 
 type orderRepository struct {
@@ -222,24 +221,6 @@ func (r orderRepository) FindByFarmUserId(farmUserId uint64, p domain.Pagination
 	paginatedOrders.Total = uint64(len(orders))
 	paginatedOrders.Pages = uint(math.Ceil(float64(paginatedOrders.Total) / float64(p.CountPerPage)))
 	return paginatedOrders, nil
-}
-
-func (r orderRepository) SetOrderStatus(order domain.Order) (domain.Order, error) {
-	orderInstance, err := r.FindById(order.Id)
-	if err != nil {
-		return domain.Order{}, err
-	}
-
-	if order.IsOrderStatusValid(orderInstance.Status, order.Status) {
-		order, err := r.Update(order)
-		if err != nil {
-			return domain.Order{}, err
-		}
-
-		return order, nil
-	}
-
-	return domain.Order{}, errors.New("status is not valid for this order")
 }
 
 func (r orderRepository) mapDomainToModel(o domain.Order) order {

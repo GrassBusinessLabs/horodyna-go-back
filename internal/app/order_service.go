@@ -10,11 +10,11 @@ type OrderService interface {
 	Save(o domain.Order) (domain.Order, error)
 	FindById(id uint64) (domain.Order, error)
 	Update(o domain.Order, req domain.Order) (domain.Order, error)
+	NoRequestUpdate(o domain.Order) (domain.Order, error)
 	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(o domain.Order) error
 	Find(uint64) (interface{}, error)
 	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
-	SetOrderStatus(order domain.Order) (domain.Order, error)
 }
 
 func NewOrderService(or database.OrderRepository) OrderService {
@@ -86,6 +86,16 @@ func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, 
 	return order, nil
 }
 
+func (s orderService) NoRequestUpdate(order domain.Order) (domain.Order, error) {
+	order, err := s.orderRepo.Update(order)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return domain.Order{}, err
+	}
+
+	return order, nil
+}
+
 func (s orderService) Delete(order domain.Order) error {
 	err := s.orderRepo.Delete(order)
 	if err != nil {
@@ -104,14 +114,4 @@ func (s orderService) FindByFarmUserId(farmUserId uint64, p domain.Pagination) (
 	}
 
 	return orders, nil
-}
-
-func (s orderService) SetOrderStatus(order domain.Order) (domain.Order, error) {
-	order, err := s.orderRepo.SetOrderStatus(order)
-	if err != nil {
-		log.Printf("OrderService: %s", err)
-		return domain.Order{}, err
-	}
-
-	return order, nil
 }

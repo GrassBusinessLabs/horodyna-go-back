@@ -21,6 +21,10 @@ type UpdateOrderRequest struct {
 	Ttn           *string `json:"ttn"`
 }
 
+type OrderStatusRequest struct {
+	Status string `json:"status"`
+}
+
 func (m UpdateOrderRequest) ToDomainModel() (interface{}, error) {
 	return domain.Order{
 		Address:       m.Address,
@@ -44,5 +48,11 @@ func (m OrderRequest) ToDomainModel() (interface{}, error) {
 		OrderItems:    orderItems,
 		PostOffice:    m.PostOffice,
 		Ttn:           m.Ttn,
+	}, nil
+}
+
+func (m OrderStatusRequest) ToDomainModel() (interface{}, error) {
+	return domain.Order{
+		Status: domain.OrderStatus(m.Status),
 	}, nil
 }

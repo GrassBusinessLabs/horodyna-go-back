@@ -5,6 +5,7 @@ import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/http/requests"
 	"boilerplate/internal/infra/http/resources"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -134,47 +135,61 @@ func (c OrderController) FindByFarmUserId() http.HandlerFunc {
 	}
 }
 
-func (c OrderController) SetSubmittedOrderStatus() http.HandlerFunc {
+func (c OrderController) SetOrderStatusAsReceiver() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orderInstance := r.Context().Value(OrderKey).(domain.Order)
-		orderInstance.Status = domain.SUBMITTED
-		order, err := c.orderService.SetOrderStatus(orderInstance)
+		orderStatus, err := requests.Bind(r, requests.OrderStatusRequest{}, domain.Order{})
 		if err != nil {
 			log.Printf("OrderController: %s", err)
-			InternalServerError(w, err)
+			BadRequest(w, err)
 			return
 		}
 
-		Success(w, resources.OrderDto{}.DomainToDto(order))
+		orderInstance := r.Context().Value(OrderKey).(domain.Order)
+		if orderInstance.IsReceiverStatus(orderStatus.Status) {
+			orderInstance.Status = orderStatus.Status
+			order, err := c.orderService.NoRequestUpdate(orderInstance)
+			if err != nil {
+				log.Printf("OrderController: %s", err)
+				InternalServerError(w, err)
+				return
+			}
+
+			Success(w, resources.OrderDto{}.DomainToDto(order))
+		} else {
+			err = errors.New("status declined")
+			log.Printf("OrderController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
 	}
 }
 
-func (c OrderController) SetShippingOrderStatus() http.HandlerFunc {
+func (c OrderController) SetOrderStatusAsFarmer() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		orderInstance := r.Context().Value(OrderKey).(domain.Order)
-		orderInstance.Status = domain.SHIPPING
-		order, err := c.orderService.SetOrderStatus(orderInstance)
+		orderStatus, err := requests.Bind(r, requests.OrderStatusRequest{}, domain.Order{})
 		if err != nil {
 			log.Printf("OrderController: %s", err)
-			InternalServerError(w, err)
+			BadRequest(w, err)
 			return
 		}
 
-		Success(w, resources.OrderDto{}.DomainToDto(order))
-	}
-}
-
-func (c OrderController) SetCompletedOrderStatus() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
 		orderInstance := r.Context().Value(OrderKey).(domain.Order)
-		orderInstance.Status = domain.COMPLETED
-		order, err := c.orderService.SetOrderStatus(orderInstance)
-		if err != nil {
+		if orderInstance.IsFarmerStatus(orderStatus.Status) {
+			orderInstance.Status = orderStatus.Status
+			order, err := c.orderService.NoRequestUpdate(orderInstance)
+			if err != nil {
+				log.Printf("OrderController: %s", err)
+				InternalServerError(w, err)
+				return
+			}
+
+			Success(w, resources.OrderDto{}.DomainToDto(order))
+		} else {
+			err = errors.New("status declined")
 			log.Printf("OrderController: %s", err)
-			InternalServerError(w, err)
+			BadRequest(w, err)
 			return
 		}
-
-		Success(w, resources.OrderDto{}.DomainToDto(order))
 	}
 }

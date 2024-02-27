@@ -43,13 +43,23 @@ func (o Order) GetUserId() uint64 {
 	return o.UserId
 }
 
-func (o Order) IsOrderStatusValid(oldStatus OrderStatus, newStatus OrderStatus) bool {
-	if newStatus == SUBMITTED {
-		return true
-	} else if newStatus == SHIPPING {
-		return oldStatus == SUBMITTED
-	} else if newStatus == COMPLETED {
-		return oldStatus == SHIPPING
+func (o Order) IsReceiverStatus(stasus OrderStatus) bool {
+	receiverStatuses := []OrderStatus{DRAFT, SUBMITTED, COMPLETED}
+	for _, receiverStatus := range receiverStatuses {
+		if stasus == receiverStatus {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (o Order) IsFarmerStatus(stasus OrderStatus) bool {
+	farmerStatuses := []OrderStatus{APPROVED, DECLINED, COMPLETED}
+	for _, farmerStatus := range farmerStatuses {
+		if stasus == farmerStatus {
+			return true
+		}
 	}
 
 	return false
