@@ -33,7 +33,6 @@ type Services struct {
 	app.OfferService
 	app.OrderService
 	app.OrderItemsService
-	app.AddressService
 	app.ImageModelService
 }
 
@@ -45,7 +44,6 @@ type Controllers struct {
 	controllers.OfferController
 	controllers.OrderController
 	controllers.OrderItemController
-	controllers.AddressController
 	controllers.ImageModelController
 }
 
@@ -59,7 +57,6 @@ func New(conf config.Configuration) Container {
 	farmRepository := database.NewFarmRepository(sess, offerRepository)
 	orderItemRepository := database.NewOrderItemRepository(sess, offerRepository, farmRepository)
 	orderRepository := database.NewOrderRepository(sess, orderItemRepository)
-	addressRepository := database.NewAddressepository(sess)
 	ImageRepository := database.NewImageModelRepository(sess)
 
 	userService := app.NewUserService(userRepository)
@@ -69,9 +66,8 @@ func New(conf config.Configuration) Container {
 	imageStorageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
 	imageService := app.NewImageModelService(ImageRepository, imageStorageService)
 	offerService := app.NewOfferService(offerRepository, imageStorageService, imageService)
-	orderService := app.NewOrderService(orderRepository, addressRepository)
+	orderService := app.NewOrderService(orderRepository)
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
-	addressService := app.NewAddressService(addressRepository)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
@@ -80,7 +76,6 @@ func New(conf config.Configuration) Container {
 	offerController := controllers.NewOfferController(offerService, farmService, imageService)
 	orderController := controllers.NewOrderController(orderService, orderItemService)
 	orderItemController := controllers.NewOrderItemController(orderItemService)
-	addressController := controllers.NewAddressController(addressService)
 	imageController := controllers.NewImageModelController(imageService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
@@ -97,7 +92,6 @@ func New(conf config.Configuration) Container {
 			offerService,
 			orderService,
 			orderItemService,
-			addressService,
 			imageService,
 		},
 		Controllers: Controllers{
@@ -108,7 +102,6 @@ func New(conf config.Configuration) Container {
 			offerController,
 			orderController,
 			orderItemController,
-			addressController,
 			imageController,
 		},
 	}

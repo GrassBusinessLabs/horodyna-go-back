@@ -51,14 +51,14 @@ func (c FarmController) Save() http.HandlerFunc {
 		farm, err := requests.Bind(r, requests.FarmRequest{}, domain.Farm{})
 		farm.User.Id = u.Id
 		if err != nil {
-			log.Printf("FarmController: %s", err)
+			log.Printf("FarmController req: %s", err)
 			BadRequest(w, err)
 			return
 		}
 
 		farm, err = c.farmService.Save(farm)
 		if err != nil {
-			log.Printf("FarmController: %s", err)
+			log.Printf("FarmController save: %s", err)
 			BadRequest(w, err)
 			return
 		}

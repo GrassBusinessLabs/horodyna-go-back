@@ -36,7 +36,6 @@ func (s farmService) Find(id uint64) (interface{}, error) {
 }
 
 func (s farmService) Save(farm domain.Farm) (domain.Farm, error) {
-
 	u, err := s.farmRepo.Save(farm)
 	if err != nil {
 		log.Printf("FarmService: %s", err)

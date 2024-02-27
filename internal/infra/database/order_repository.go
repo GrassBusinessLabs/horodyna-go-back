@@ -15,7 +15,7 @@ type order struct {
 	Id            uint64     `db:"id,omitempty"`
 	Comment       string     `db:"comment"`
 	UserId        uint64     `db:"user_id"`
-	AddressId     uint64     `db:"address_id"`
+	Address       *string    `db:"address"`
 	ProductsPrice float64    `db:"products_price"`
 	ShippingPrice float64    `db:"shipping_price"`
 	TotalPrice    float64    `db:"total_price"`
@@ -248,7 +248,7 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 		Id:            o.Id,
 		Comment:       o.Comment,
 		UserId:        o.UserId,
-		AddressId:     o.Address.ID,
+		Address:       o.Address,
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,
@@ -262,17 +262,11 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 }
 
 func (r orderRepository) mapModelToDomain(o order) domain.Order {
-	var address address
-	err := r.coll.Session().SQL().Select("*").From("adresses").Where("id = ?", o.AddressId).One(&address)
-	if err != nil {
-		return domain.Order{}
-	}
-
 	return domain.Order{
 		Id:            o.Id,
 		Comment:       o.Comment,
 		UserId:        o.UserId,
-		Address:       mapModelToDomainAdress(address),
+		Address:       o.Address,
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
 		TotalPrice:    o.TotalPrice,

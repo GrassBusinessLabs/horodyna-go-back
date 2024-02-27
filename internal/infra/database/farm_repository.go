@@ -53,12 +53,18 @@ func NewFarmRepository(dbSession db.Session, offerR OfferRepository) FarmReposit
 }
 
 func (r farmRepository) Save(farm domain.Farm) (domain.Farm, error) {
-	u := r.mapDomainToModel(farm)
-	u.CreatedDate, u.UpdatedDate = time.Now(), time.Now()
-	farmR, err := r.findFarmWithUser(farm.Id)
+	farmModel := r.mapDomainToModel(farm)
+	farmModel.CreatedDate, farmModel.UpdatedDate = time.Now(), time.Now()
+	err := r.coll.InsertReturning(&farmModel)
 	if err != nil {
 		return domain.Farm{}, err
 	}
+
+	farmR, err := r.findFarmWithUser(farmModel.Id)
+	if err != nil {
+		return domain.Farm{}, err
+	}
+
 	return farmR, nil
 }
 

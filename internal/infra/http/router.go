@@ -60,8 +60,6 @@ func Router(cont container.Container) http.Handler {
 				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
-
-				AddressRouter(apiRouter, cont.AddressController, cont.AddressService)
 			})
 		})
 	})
@@ -150,35 +148,6 @@ func CategoryRouter(r chi.Router, categoryController controllers.CategoryControl
 		apiRouter.Get(
 			"/",
 			categoryController.FindAll(),
-		)
-	})
-}
-
-func AddressRouter(r chi.Router, uc controllers.AddressController, as app.AddressService) {
-
-	pathObjectMiddleware := middlewares.PathObject("addressId", controllers.AddressKey, as)
-	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Address](controllers.AddressKey)
-
-	r.Route("/address", func(apiRouter chi.Router) {
-		apiRouter.Get(
-			"/",
-			uc.FindAll(),
-		)
-		apiRouter.With(pathObjectMiddleware).Get(
-			"/{addressId}",
-			uc.Read(),
-		)
-		apiRouter.Post(
-			"/",
-			uc.Create(),
-		)
-		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
-			"/{addressId}",
-			uc.Update(),
-		)
-		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
-			"/{addressId}",
-			uc.Delete(),
 		)
 	})
 }

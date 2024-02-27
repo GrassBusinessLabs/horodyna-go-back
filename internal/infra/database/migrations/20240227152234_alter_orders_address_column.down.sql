@@ -1,0 +1,4 @@
+ALTER TABLE orders
+DROP COLUMN address,
+ADD COLUMN address_id INTEGER NOT NULL,
+ADD CONSTRAINT fk_addresses_id FOREIGN KEY (address_id) REFERENCES addresses(id) ON DELETE CASCADE;

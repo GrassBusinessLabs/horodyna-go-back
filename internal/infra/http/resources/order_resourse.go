@@ -5,16 +5,16 @@ import (
 )
 
 type OrderDto struct {
-	Id              uint64     `json:"id"`
-	OrderItemsCount uint64     `json:"order_items_count"`
-	Status          string     `json:"status"`
-	Comment         string     `json:"comment"`
-	Address         AddressDto `json:"address"`
-	UserId          uint64     `json:"user_id"`
-	ProductPrice    float64    `json:"product_price"`
-	ShippingPrice   float64    `json:"shipping_price"`
-	TotalPrice      float64    `json:"total_price"`
-	CreatedDate     string     `json:"created_data"`
+	Id              uint64  `json:"id"`
+	OrderItemsCount uint64  `json:"order_items_count"`
+	Status          string  `json:"status"`
+	Comment         string  `json:"comment"`
+	Address         *string `json:"address"`
+	UserId          uint64  `json:"user_id"`
+	ProductPrice    float64 `json:"product_price"`
+	ShippingPrice   float64 `json:"shipping_price"`
+	TotalPrice      float64 `json:"total_price"`
+	CreatedDate     string  `json:"created_data"`
 }
 
 type OrderDtoWithOrderItems struct {
@@ -22,7 +22,7 @@ type OrderDtoWithOrderItems struct {
 	OrderItems    []OrderItemDto `json:"order_items"`
 	Status        string         `json:"status"`
 	Comment       string         `json:"comment"`
-	Address       AddressDto     `json:"address"`
+	Address       *string        `json:"address"`
 	UserId        uint64         `json:"user_id"`
 	ProductPrice  float64        `json:"product_price"`
 	ShippingPrice float64        `json:"shipping_price"`
@@ -47,7 +47,7 @@ func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.Ord
 		OrderItems:    orderItems,
 		Status:        string(order.Status),
 		Comment:       order.Comment,
-		Address:       AddressDto{}.DomainToDto(order.Address),
+		Address:       order.Address,
 		UserId:        order.UserId,
 		ProductPrice:  order.ProductsPrice,
 		ShippingPrice: order.ShippingPrice,
@@ -62,7 +62,7 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 		OrderItemsCount: order.OrderItemsCount,
 		Status:          string(order.Status),
 		Comment:         order.Comment,
-		Address:         AddressDto{}.DomainToDto(order.Address),
+		Address:         order.Address,
 		UserId:          order.UserId,
 		ProductPrice:    order.ProductsPrice,
 		ShippingPrice:   order.ShippingPrice,

@@ -19,7 +19,7 @@ type Order struct {
 	Id              uint64
 	Comment         string
 	UserId          uint64
-	Address         Address
+	Address         *string
 	OrderItems      []OrderItem
 	OrderItemsCount uint64
 	ProductsPrice   float64
