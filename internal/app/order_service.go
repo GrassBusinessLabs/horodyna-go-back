@@ -15,16 +15,19 @@ type OrderService interface {
 	Delete(o domain.Order) error
 	Find(uint64) (interface{}, error)
 	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
+	SplitOrderByFarms(order domain.Order) ([]domain.Order, error)
 }
 
-func NewOrderService(or database.OrderRepository) OrderService {
+func NewOrderService(or database.OrderRepository, oir database.OrderItemRepository) OrderService {
 	return orderService{
-		orderRepo: or,
+		orderRepo:     or,
+		orderItemRepo: oir,
 	}
 }
 
 type orderService struct {
-	orderRepo database.OrderRepository
+	orderRepo     database.OrderRepository
+	orderItemRepo database.OrderItemRepository
 }
 
 func (s orderService) Find(id uint64) (interface{}, error) {
@@ -111,6 +114,23 @@ func (s orderService) FindByFarmUserId(farmUserId uint64, p domain.Pagination) (
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return domain.Orders{}, err
+	}
+
+	return orders, nil
+}
+
+func (s orderService) SplitOrderByFarms(order domain.Order) ([]domain.Order, error) {
+	orderItems, err := s.orderItemRepo.FindAllWithoutPagination(order.Id)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return []domain.Order{}, err
+	}
+
+	order.OrderItems = orderItems
+	orders, err := s.orderRepo.SplitOrderByFarms(order)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return []domain.Order{}, err
 	}
 
 	return orders, nil

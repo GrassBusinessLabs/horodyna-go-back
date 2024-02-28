@@ -44,7 +44,7 @@ func (o Order) GetUserId() uint64 {
 }
 
 func (o Order) IsReceiverStatus(stasus OrderStatus) bool {
-	receiverStatuses := []OrderStatus{DRAFT, SUBMITTED, COMPLETED}
+	receiverStatuses := []OrderStatus{SUBMITTED, COMPLETED}
 	for _, receiverStatus := range receiverStatuses {
 		if stasus == receiverStatus {
 			return true
@@ -55,7 +55,7 @@ func (o Order) IsReceiverStatus(stasus OrderStatus) bool {
 }
 
 func (o Order) IsFarmerStatus(stasus OrderStatus) bool {
-	farmerStatuses := []OrderStatus{APPROVED, DECLINED, COMPLETED}
+	farmerStatuses := []OrderStatus{APPROVED, DECLINED, SHIPPING}
 	for _, farmerStatus := range farmerStatuses {
 		if stasus == farmerStatus {
 			return true

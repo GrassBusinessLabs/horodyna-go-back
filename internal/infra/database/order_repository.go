@@ -35,6 +35,7 @@ type OrderRepository interface {
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
 	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
+	SplitOrderByFarms(order domain.Order) ([]domain.Order, error)
 }
 
 type orderRepository struct {
@@ -55,16 +56,19 @@ func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	if err != nil || exists {
 		return domain.Order{}, errors.New("user already have an order in DRAFT status")
 	}
+
 	ordrItmsModel, ProdPrice, err := r.orderItemRepo.PrepareAllToSave(order.OrderItems, o.UserId)
 	if err != nil {
 		return domain.Order{}, err
 	}
+
 	o.Status = string(domain.DRAFT)
 	o.CreatedDate, o.UpdatedDate = time.Now(), time.Now()
 	err = r.coll.InsertReturning(&o)
 	if err != nil {
 		return domain.Order{}, err
 	}
+
 	err = r.orderItemRepo.SaveAll(ordrItmsModel, o.Id)
 	if err != nil {
 		return domain.Order{}, err
@@ -82,7 +86,65 @@ func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	if err != nil {
 		return domain.Order{}, err
 	}
+
 	return orderDomain, nil
+}
+
+func (r orderRepository) SplitOrderByFarms(order domain.Order) ([]domain.Order, error) {
+	farmOrderItems := make(map[uint64][]domain.OrderItem)
+	for _, orderItem := range order.OrderItems {
+		newOrderItem := domain.OrderItem{
+			Title:      orderItem.Title,
+			Price:      orderItem.Price,
+			TotalPrice: orderItem.TotalPrice,
+			Amount:     orderItem.Amount,
+			OfferId:    orderItem.OfferId,
+		}
+		_, keyExists := farmOrderItems[orderItem.Farm.Id]
+		if keyExists {
+			farmOrderItems[orderItem.Farm.Id] = append(farmOrderItems[orderItem.Farm.Id], newOrderItem)
+		} else {
+			farmOrderItems[orderItem.Farm.Id] = []domain.OrderItem{newOrderItem}
+		}
+	}
+
+	order.Status = domain.DECLINED
+	order, err := r.Update(order)
+	if err != nil {
+		return []domain.Order{}, err
+	}
+
+	newOrders := []domain.Order{}
+	for _, orderItems := range farmOrderItems {
+		newOrder := domain.Order{
+			Comment:       order.Comment,
+			UserId:        order.UserId,
+			Address:       order.Address,
+			OrderItems:    orderItems,
+			ShippingPrice: order.ShippingPrice,
+			PostOffice:    order.PostOffice,
+			Ttn:           order.Ttn,
+		}
+		newOrder, err := r.Save(newOrder)
+		if err != nil {
+			return []domain.Order{}, err
+		}
+
+		newOrder.Status = domain.SUBMITTED
+		newOrder, err = r.Update(newOrder)
+		if err != nil {
+			return []domain.Order{}, err
+		}
+
+		newOrders = append(newOrders, newOrder)
+	}
+
+	err = r.Delete(order)
+	if err != nil {
+		return []domain.Order{}, err
+	}
+
+	return newOrders, nil
 }
 
 func (r orderRepository) FindById(id uint64) (domain.Order, error) {

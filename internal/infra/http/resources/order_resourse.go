@@ -71,6 +71,16 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 	}
 }
 
+func (d OrderDto) DomainToDtoCollection(orders []domain.Order) []OrderDto {
+	result := make([]OrderDto, len(orders))
+
+	for i := range orders {
+		result[i] = d.DomainToDto(orders[i])
+	}
+
+	return result
+}
+
 func (d OrderDto) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDto {
 	result := make([]OrderDto, len(orders.Items))
 

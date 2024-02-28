@@ -27,7 +27,7 @@ type orderItem struct {
 type orderItemWithFarm struct {
 	OrderItem orderItem
 	FarmId    uint64  `db:"farm_id"`
-	Name      string  `db:"farm_name"`
+	Name      *string `db:"farm_name"`
 	City      string  `db:"farm_city"`
 	Address   string  `db:"farm_address"`
 	Lat       float64 `db:"farm_lat"`
@@ -243,7 +243,7 @@ func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.
 	for i, oi := range orderItems {
 		orderItem := r.mapModelToDomainWithoutOrder(oi.OrderItem, farm{
 			Id:        oi.FarmId,
-			Name:      &oi.Name,
+			Name:      oi.Name,
 			City:      oi.City,
 			Longitude: oi.Lng,
 			Latitude:  oi.Lat,

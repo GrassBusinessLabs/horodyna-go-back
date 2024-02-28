@@ -66,7 +66,7 @@ func New(conf config.Configuration) Container {
 	imageStorageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
 	imageService := app.NewImageModelService(ImageRepository, imageStorageService)
 	offerService := app.NewOfferService(offerRepository, imageStorageService, imageService)
-	orderService := app.NewOrderService(orderRepository)
+	orderService := app.NewOrderService(orderRepository, orderItemRepository)
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
 
 	authController := controllers.NewAuthController(authService, userService)
