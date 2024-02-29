@@ -112,6 +112,10 @@ func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderServi
 			"/farmer-status/{farmId}/{orderId}",
 			oc.SetOrderStatusAsFarmer(),
 		)
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/split/{orderId}",
+			oc.SplitOrderByFarms(),
+		)
 		apiRouter.Get(
 			"/by-farmer",
 			oc.FindAllByUserId(),

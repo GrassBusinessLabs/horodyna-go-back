@@ -99,6 +99,7 @@ func (r orderRepository) SplitOrderByFarms(order domain.Order) ([]domain.Order, 
 			TotalPrice: orderItem.TotalPrice,
 			Amount:     orderItem.Amount,
 			OfferId:    orderItem.OfferId,
+			Farm:       orderItem.Farm,
 		}
 		_, keyExists := farmOrderItems[orderItem.Farm.Id]
 		if keyExists {
@@ -108,40 +109,27 @@ func (r orderRepository) SplitOrderByFarms(order domain.Order) ([]domain.Order, 
 		}
 	}
 
-	order.Status = domain.DECLINED
-	order, err := r.Update(order)
-	if err != nil {
-		return []domain.Order{}, err
-	}
-
 	newOrders := []domain.Order{}
 	for _, orderItems := range farmOrderItems {
+		orderItemsModel, productPrice, err := r.orderItemRepo.PrepareAllToSave(orderItems, order.UserId)
+		if err != nil {
+			return []domain.Order{}, err
+		}
+
 		newOrder := domain.Order{
-			Comment:       order.Comment,
-			UserId:        order.UserId,
-			Address:       order.Address,
-			OrderItems:    orderItems,
-			ShippingPrice: order.ShippingPrice,
-			PostOffice:    order.PostOffice,
-			Ttn:           order.Ttn,
+			Comment:         order.Comment,
+			UserId:          order.UserId,
+			Address:         order.Address,
+			OrderItems:      orderItems,
+			OrderItemsCount: uint64(len(orderItemsModel)),
+			ProductsPrice:   productPrice,
+			TotalPrice:      math.Round((productPrice+order.ShippingPrice)*100) / 100,
+			ShippingPrice:   order.ShippingPrice,
+			Status:          domain.DRAFT,
+			PostOffice:      order.PostOffice,
+			Ttn:             order.Ttn,
 		}
-		newOrder, err := r.Save(newOrder)
-		if err != nil {
-			return []domain.Order{}, err
-		}
-
-		newOrder.Status = domain.SUBMITTED
-		newOrder, err = r.Update(newOrder)
-		if err != nil {
-			return []domain.Order{}, err
-		}
-
 		newOrders = append(newOrders, newOrder)
-	}
-
-	err = r.Delete(order)
-	if err != nil {
-		return []domain.Order{}, err
 	}
 
 	return newOrders, nil

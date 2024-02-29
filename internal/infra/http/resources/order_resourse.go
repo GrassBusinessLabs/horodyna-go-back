@@ -56,6 +56,16 @@ func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.Ord
 	}
 }
 
+func (d OrderDtoWithOrderItems) DomainWithOrderItemsToDtoCollection(orders []domain.Order, imageDto ImageMDto) []OrderDtoWithOrderItems {
+	result := make([]OrderDtoWithOrderItems, len(orders))
+
+	for i := range orders {
+		result[i] = d.DomainToDto(orders[i], orders[i].OrderItems, imageDto)
+	}
+
+	return result
+}
+
 func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 	return OrderDto{
 		Id:              order.Id,

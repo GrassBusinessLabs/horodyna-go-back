@@ -147,18 +147,6 @@ func (c OrderController) SetOrderStatusAsReceiver() http.HandlerFunc {
 		orderInstance := r.Context().Value(OrderKey).(domain.Order)
 		if orderInstance.IsReceiverStatus(orderStatus.Status) {
 			orderInstance.Status = orderStatus.Status
-			if orderInstance.Status == domain.SUBMITTED {
-				newOrders, err := c.orderService.SplitOrderByFarms(orderInstance)
-				if err != nil {
-					log.Printf("OrderController: %s", err)
-					InternalServerError(w, err)
-					return
-				}
-
-				Success(w, resources.OrderDto{}.DomainToDtoCollection(newOrders))
-				return
-			}
-
 			order, err := c.orderService.NoRequestUpdate(orderInstance)
 			if err != nil {
 				log.Printf("OrderController: %s", err)
@@ -203,5 +191,19 @@ func (c OrderController) SetOrderStatusAsFarmer() http.HandlerFunc {
 			BadRequest(w, err)
 			return
 		}
+	}
+}
+
+func (c OrderController) SplitOrderByFarms() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		order := r.Context().Value(OrderKey).(domain.Order)
+		splitedOrders, err := c.orderService.SplitOrderByFarms(order)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainWithOrderItemsToDtoCollection(splitedOrders, resources.ImageMDto{}))
 	}
 }
