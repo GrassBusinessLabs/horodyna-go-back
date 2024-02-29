@@ -117,7 +117,7 @@ func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (do
 		From("offers AS ofr").
 		Where(" ofr.farm_id = ? AND ofr.deleted_date IS NULL", farmId).
 		Join("users AS u").On("u.id = ofr.user_id").
-		OrderBy("ofr.status")
+		OrderBy("-ofr.status")
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
 	if err != nil {
