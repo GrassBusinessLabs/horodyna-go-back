@@ -15,7 +15,9 @@ type OrderService interface {
 	Delete(o domain.Order) error
 	Find(uint64) (interface{}, error)
 	FindByFarmerId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
-	SplitOrderByFarms(order domain.Order) ([]domain.Order, error)
+	SplitOrderByFarms(order domain.Order) (map[uint64]domain.Order, error)
+	SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error)
+	DeleteSplitedOrder(order domain.Order, farmId uint64) error
 }
 
 func NewOrderService(or database.OrderRepository, oir database.OrderItemRepository) OrderService {
@@ -119,19 +121,39 @@ func (s orderService) FindByFarmerId(farmUserId uint64, p domain.Pagination) (do
 	return orders, nil
 }
 
-func (s orderService) SplitOrderByFarms(order domain.Order) ([]domain.Order, error) {
+func (s orderService) SplitOrderByFarms(order domain.Order) (map[uint64]domain.Order, error) {
 	orderItems, err := s.orderItemRepo.FindAllWithoutPagination(order.Id)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
-		return []domain.Order{}, err
+		return make(map[uint64]domain.Order, 0), err
 	}
 
 	order.OrderItems = orderItems
 	orders, err := s.orderRepo.SplitOrderByFarms(order)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
-		return []domain.Order{}, err
+		return make(map[uint64]domain.Order, 0), err
 	}
 
 	return orders, nil
+}
+
+func (s orderService) SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error) {
+	splitedOrder, err := s.orderRepo.SubmitSplitedOrder(order, farmId)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return domain.Order{}, err
+	}
+
+	return splitedOrder, nil
+}
+
+func (s orderService) DeleteSplitedOrder(order domain.Order, farmId uint64) error {
+	err := s.orderRepo.DeleteSplitedOrder(order, farmId)
+	if err != nil {
+		log.Printf("OrderService: %s", err)
+		return err
+	}
+
+	return nil
 }

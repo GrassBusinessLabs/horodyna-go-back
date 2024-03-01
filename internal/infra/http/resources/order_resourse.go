@@ -30,6 +30,10 @@ type OrderDtoWithOrderItems struct {
 	CreatedDate   string         `json:"created_data"`
 }
 
+type SplitedOrdersDto struct {
+	SplitedOrders map[uint64]OrderDtoWithOrderItems `json:"splited_orders"`
+}
+
 type OrdersDto struct {
 	Items []OrderDto `json:"items"`
 	Pages uint       `json:"pages"`
@@ -115,4 +119,14 @@ func (d OrderDto) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDto
 	}
 
 	return OrdersDto{Items: result, Pages: orders.Pages, Total: orders.Total}
+}
+
+func (d SplitedOrdersDto) DomainToDto(splitedOrders map[uint64]domain.Order) SplitedOrdersDto {
+	splitedOrdersDto := make(map[uint64]OrderDtoWithOrderItems, len(splitedOrders))
+
+	for key, order := range splitedOrders {
+		splitedOrdersDto[key] = OrderDtoWithOrderItems{}.DomainToDto(order)
+	}
+
+	return SplitedOrdersDto{SplitedOrders: splitedOrdersDto}
 }

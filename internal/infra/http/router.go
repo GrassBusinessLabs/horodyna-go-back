@@ -116,6 +116,14 @@ func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderServi
 			"/split/{orderId}",
 			oc.SplitOrderByFarms(),
 		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Post(
+			"/split/{orderId}/{farmId}",
+			oc.SubmitSplitedOrder(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/split/{orderId}/{farmId}",
+			oc.DeleteSplitedOrder(),
+		)
 		apiRouter.Get(
 			"/by-farmer",
 			oc.FindByFarmUserId(),

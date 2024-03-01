@@ -35,7 +35,9 @@ type OrderRepository interface {
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
 	GetOrdersByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
-	SplitOrderByFarms(order domain.Order) ([]domain.Order, error)
+	SplitOrderByFarms(order domain.Order) (map[uint64]domain.Order, error)
+	SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error)
+	DeleteSplitedOrder(order domain.Order, farmId uint64) error
 	GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order, error)
 }
 
@@ -91,33 +93,25 @@ func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	return orderDomain, nil
 }
 
-func (r orderRepository) SplitOrderByFarms(order domain.Order) ([]domain.Order, error) {
+func (r orderRepository) SplitOrderByFarms(order domain.Order) (map[uint64]domain.Order, error) {
 	farmOrderItems := make(map[uint64][]domain.OrderItem)
 	for _, orderItem := range order.OrderItems {
-		newOrderItem := domain.OrderItem{
-			Title:      orderItem.Title,
-			Price:      orderItem.Price,
-			TotalPrice: orderItem.TotalPrice,
-			Amount:     orderItem.Amount,
-			OfferId:    orderItem.OfferId,
-			Farm:       orderItem.Farm,
-		}
 		_, keyExists := farmOrderItems[orderItem.Farm.Id]
 		if keyExists {
-			farmOrderItems[orderItem.Farm.Id] = append(farmOrderItems[orderItem.Farm.Id], newOrderItem)
+			farmOrderItems[orderItem.Farm.Id] = append(farmOrderItems[orderItem.Farm.Id], orderItem)
 		} else {
-			farmOrderItems[orderItem.Farm.Id] = []domain.OrderItem{newOrderItem}
+			farmOrderItems[orderItem.Farm.Id] = []domain.OrderItem{orderItem}
 		}
 	}
 
-	newOrders := []domain.Order{}
-	for _, orderItems := range farmOrderItems {
+	splitedOrders := make(map[uint64]domain.Order)
+	for farmId, orderItems := range farmOrderItems {
 		orderItemsModel, productPrice, err := r.orderItemRepo.PrepareAllToSave(orderItems, order.User.Id)
 		if err != nil {
-			return []domain.Order{}, err
+			return make(map[uint64]domain.Order, 0), err
 		}
 
-		newOrder := domain.Order{
+		splitedOrder := domain.Order{
 			Comment:         order.Comment,
 			User:            order.User,
 			Address:         order.Address,
@@ -130,10 +124,79 @@ func (r orderRepository) SplitOrderByFarms(order domain.Order) ([]domain.Order, 
 			PostOffice:      order.PostOffice,
 			Ttn:             order.Ttn,
 		}
-		newOrders = append(newOrders, newOrder)
+		splitedOrders[farmId] = splitedOrder
 	}
 
-	return newOrders, nil
+	return splitedOrders, nil
+}
+
+func (r orderRepository) SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error) {
+	splitedOrders, err := r.SplitOrderByFarms(order)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	splitedOrder, exists := splitedOrders[farmId]
+	if !exists {
+		return domain.Order{}, errors.New("no such farm in splited orders")
+	}
+
+	splitedOrderModel := r.mapDomainToModel(splitedOrder)
+	splitedOrderModel.Status = string(domain.SUBMITTED)
+	splitedOrderModel.CreatedDate, splitedOrderModel.UpdatedDate = time.Now(), time.Now()
+	err = r.coll.InsertReturning(&splitedOrderModel)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	submittedSplitedOrder := r.mapModelToDomain(splitedOrderModel)
+	for _, orderItem := range splitedOrder.OrderItems {
+		orderItem.Order = submittedSplitedOrder
+		orderItem, err = r.orderItemRepo.Update(orderItem)
+		if err != nil {
+			return domain.Order{}, err
+		}
+	}
+
+	err = r.Recalculate(submittedSplitedOrder.Id)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	err = r.Recalculate(order.Id)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	submittedSplitedOrder.OrderItems, err = r.orderItemRepo.FindAllWithoutPagination(submittedSplitedOrder.Id)
+	if err != nil {
+		return domain.Order{}, err
+	}
+
+	return submittedSplitedOrder, nil
+}
+
+func (r orderRepository) DeleteSplitedOrder(order domain.Order, farmId uint64) error {
+	splitedOrders, err := r.SplitOrderByFarms(order)
+	if err != nil {
+		return err
+	}
+
+	splitedOrder, exists := splitedOrders[farmId]
+	if !exists {
+		return errors.New("no such farm in splited orders")
+	}
+
+	for _, orderItem := range splitedOrder.OrderItems {
+		r.orderItemRepo.Delete(orderItem.Id)
+	}
+
+	err = r.Recalculate(order.Id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r orderRepository) FindById(id uint64) (domain.Order, error) {

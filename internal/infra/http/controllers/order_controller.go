@@ -8,6 +8,9 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type OrderController struct {
@@ -205,6 +208,64 @@ func (c OrderController) SplitOrderByFarms() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoCollection(splitedOrders))
+		Success(w, resources.SplitedOrdersDto{}.DomainToDto(splitedOrders))
+	}
+}
+
+func (c OrderController) SubmitSplitedOrder() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		order := r.Context().Value(OrderKey).(domain.Order)
+		orderItems, err := c.orderItemService.FindAll(order.Id)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		order.OrderItems = orderItems
+		farmId, err := strconv.ParseUint(chi.URLParam(r, "farmId"), 10, 64)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		submitedOrder, err := c.orderService.SubmitSplitedOrder(order, farmId)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(submitedOrder))
+	}
+}
+
+func (c OrderController) DeleteSplitedOrder() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		order := r.Context().Value(OrderKey).(domain.Order)
+		orderItems, err := c.orderItemService.FindAll(order.Id)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		order.OrderItems = orderItems
+		farmId, err := strconv.ParseUint(chi.URLParam(r, "farmId"), 10, 64)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		err = c.orderService.DeleteSplitedOrder(order, farmId)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Ok(w)
 	}
 }
