@@ -3,6 +3,7 @@ package app
 import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/database"
+	"errors"
 	"log"
 )
 
@@ -16,14 +17,18 @@ type FarmService interface {
 	FindAllByCoords(points domain.Points, p domain.Pagination) (domain.Farms, error)
 }
 
-func NewFarmService(fr database.FarmRepository) FarmService {
+func NewFarmService(fr database.FarmRepository, or database.OfferRepository, orr database.OrderRepository) FarmService {
 	return farmService{
-		farmRepo: fr,
+		farmRepo:  fr,
+		offerRepo: or,
+		orderRepo: orr,
 	}
 }
 
 type farmService struct {
-	farmRepo database.FarmRepository
+	farmRepo  database.FarmRepository
+	offerRepo database.OfferRepository
+	orderRepo database.OrderRepository
 }
 
 func (s farmService) Find(id uint64) (interface{}, error) {
@@ -67,7 +72,31 @@ func (s farmService) Update(farm domain.Farm, req domain.Farm) (domain.Farm, err
 }
 
 func (s farmService) Delete(id uint64) error {
-	err := s.farmRepo.Delete(id)
+	activeOrders, err := s.orderRepo.GetActiveOrdersByFarmId(id)
+	if err != nil {
+		log.Printf("FarmService: %s", err)
+		return err
+	}
+
+	if len(activeOrders) > 0 {
+		return errors.New("you can`t delete farm if there is still acitive orders")
+	}
+
+	offers, err := s.offerRepo.FindOnlyOffersByFarmId(id)
+	if err != nil {
+		log.Printf("FarmService: %s", err)
+		return err
+	}
+
+	for _, offer := range offers {
+		err = s.offerRepo.Delete(offer.Id)
+		if err != nil {
+			log.Printf("FarmService: %s", err)
+			return err
+		}
+	}
+
+	err = s.farmRepo.Delete(id)
 	if err != nil {
 		log.Printf("FarmService: %s", err)
 		return err

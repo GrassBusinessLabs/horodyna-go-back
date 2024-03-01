@@ -45,7 +45,7 @@ func (d FarmDto) DomainToDto(farm domain.Farm, imageDto ImageMDto) FarmDto {
 	}
 }
 
-func (d FarmWithOutDto) DomainToDto(farm domain.Farm, imageDto ImageMDto) FarmWithOutDto {
+func (d FarmWithOutDto) DomainToDto(farm domain.Farm) FarmWithOutDto {
 
 	return FarmWithOutDto{
 		Id:        farm.Id,
@@ -54,7 +54,7 @@ func (d FarmWithOutDto) DomainToDto(farm domain.Farm, imageDto ImageMDto) FarmWi
 		Address:   farm.Address,
 		Latitude:  farm.Latitude,
 		Longitude: farm.Longitude,
-		AllImages: imageDto.DomainToDtoMass(farm.AllImages).Items,
+		AllImages: ImageMDto{}.DomainToDtoMass(farm.AllImages).Items,
 		UserId:    farm.User.Id,
 	}
 }

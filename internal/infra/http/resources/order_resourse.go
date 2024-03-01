@@ -10,7 +10,7 @@ type OrderDto struct {
 	Status          string  `json:"status"`
 	Comment         string  `json:"comment"`
 	Address         *string `json:"address"`
-	UserId          uint64  `json:"user_id"`
+	User            UserDto `json:"user"`
 	ProductPrice    float64 `json:"product_price"`
 	ShippingPrice   float64 `json:"shipping_price"`
 	TotalPrice      float64 `json:"total_price"`
@@ -23,7 +23,7 @@ type OrderDtoWithOrderItems struct {
 	Status        string         `json:"status"`
 	Comment       string         `json:"comment"`
 	Address       *string        `json:"address"`
-	UserId        uint64         `json:"user_id"`
+	User          UserDto        `json:"user"`
 	ProductPrice  float64        `json:"product_price"`
 	ShippingPrice float64        `json:"shipping_price"`
 	TotalPrice    float64        `json:"total_price"`
@@ -36,10 +36,16 @@ type OrdersDto struct {
 	Total uint64     `json:"total"`
 }
 
-func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.OrderItem, imageDto ImageMDto) OrderDtoWithOrderItems {
-	orderItems := make([]OrderItemDto, len(ori))
-	for i, item := range ori {
-		orderItems[i] = OrderItemDto{}.DomainToDto(item, imageDto)
+type OrdersDtoWithOrderItems struct {
+	Items []OrderDtoWithOrderItems `json:"items"`
+	Pages uint                     `json:"pages"`
+	Total uint64                   `json:"total"`
+}
+
+func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order) OrderDtoWithOrderItems {
+	orderItems := make([]OrderItemDto, len(order.OrderItems))
+	for i, item := range order.OrderItems {
+		orderItems[i] = OrderItemDto{}.DomainToDto(item)
 	}
 
 	return OrderDtoWithOrderItems{
@@ -48,7 +54,7 @@ func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.Ord
 		Status:        string(order.Status),
 		Comment:       order.Comment,
 		Address:       order.Address,
-		UserId:        order.UserId,
+		User:          UserDto{}.DomainToDto(order.User),
 		ProductPrice:  order.ProductsPrice,
 		ShippingPrice: order.ShippingPrice,
 		TotalPrice:    order.TotalPrice,
@@ -56,14 +62,24 @@ func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, ori []domain.Ord
 	}
 }
 
-func (d OrderDtoWithOrderItems) DomainWithOrderItemsToDtoCollection(orders []domain.Order, imageDto ImageMDto) []OrderDtoWithOrderItems {
+func (d OrderDtoWithOrderItems) DomainToDtoCollection(orders []domain.Order) []OrderDtoWithOrderItems {
 	result := make([]OrderDtoWithOrderItems, len(orders))
 
 	for i := range orders {
-		result[i] = d.DomainToDto(orders[i], orders[i].OrderItems, imageDto)
+		result[i] = d.DomainToDto(orders[i])
 	}
 
 	return result
+}
+
+func (d OrderDtoWithOrderItems) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDtoWithOrderItems {
+	result := make([]OrderDtoWithOrderItems, len(orders.Items))
+
+	for i := range orders.Items {
+		result[i] = d.DomainToDto(orders.Items[i])
+	}
+
+	return OrdersDtoWithOrderItems{Items: result, Pages: orders.Pages, Total: orders.Total}
 }
 
 func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
@@ -73,7 +89,7 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 		Status:          string(order.Status),
 		Comment:         order.Comment,
 		Address:         order.Address,
-		UserId:          order.UserId,
+		User:            UserDto{}.DomainToDto(order.User),
 		ProductPrice:    order.ProductsPrice,
 		ShippingPrice:   order.ShippingPrice,
 		TotalPrice:      order.TotalPrice,

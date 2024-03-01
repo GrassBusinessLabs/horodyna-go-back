@@ -34,8 +34,9 @@ type OrderRepository interface {
 	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(order domain.Order) error
 	Recalculate(orderId uint64) error
-	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
+	GetOrdersByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
 	SplitOrderByFarms(order domain.Order) ([]domain.Order, error)
+	GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order, error)
 }
 
 type orderRepository struct {
@@ -52,7 +53,7 @@ func NewOrderRepository(dbSession db.Session, orderItemRepo OrderItemRepository)
 
 func (r orderRepository) Save(order domain.Order) (domain.Order, error) {
 	o := r.mapDomainToModel(order)
-	exists, err := r.coll.Find(db.Cond{"deleted_date": nil, "status": domain.DRAFT, "user_id": order.UserId}).Exists()
+	exists, err := r.coll.Find(db.Cond{"deleted_date": nil, "status": domain.DRAFT, "user_id": order.User.Id}).Exists()
 	if err != nil || exists {
 		return domain.Order{}, errors.New("user already have an order in DRAFT status")
 	}
@@ -111,14 +112,14 @@ func (r orderRepository) SplitOrderByFarms(order domain.Order) ([]domain.Order, 
 
 	newOrders := []domain.Order{}
 	for _, orderItems := range farmOrderItems {
-		orderItemsModel, productPrice, err := r.orderItemRepo.PrepareAllToSave(orderItems, order.UserId)
+		orderItemsModel, productPrice, err := r.orderItemRepo.PrepareAllToSave(orderItems, order.User.Id)
 		if err != nil {
 			return []domain.Order{}, err
 		}
 
 		newOrder := domain.Order{
 			Comment:         order.Comment,
-			UserId:          order.UserId,
+			User:            order.User,
 			Address:         order.Address,
 			OrderItems:      orderItems,
 			OrderItemsCount: uint64(len(orderItemsModel)),
@@ -151,26 +152,27 @@ func (r orderRepository) FindById(id uint64) (domain.Order, error) {
 	return orderDomain, nil
 }
 
-func (or orderRepository) FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error) {
+func (r orderRepository) FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error) {
 	var data []order
-	query := or.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil})
+	query := r.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil})
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
 	if err != nil {
 		return domain.Orders{}, err
 	}
 
-	orders := or.mapModelToDomainPagination(data)
+	orders := r.mapModelToDomainPagination(data)
 	if err != nil {
 		return domain.Orders{}, err
 	}
 
 	for i, item := range orders.Items {
-		count, err := or.orderItemRepo.Count(item.Id)
+		orderItems, err := r.orderItemRepo.FindAllWithoutPagination(item.Id)
 		if err != nil {
 			return domain.Orders{}, err
 		}
-		orders.Items[i].OrderItemsCount = count
+		orders.Items[i].OrderItemsCount = uint64(len(orderItems))
+		orders.Items[i].OrderItems = orderItems
 	}
 
 	totalCount, err := res.TotalEntries()
@@ -230,27 +232,18 @@ func (r orderRepository) Recalculate(orderId uint64) error {
 	return nil
 }
 
-func (r orderRepository) FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error) {
-	var farmsId []uint64
-	var offersId []uint64
-	var ordersId []uint64
+func (r orderRepository) GetOrdersByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error) {
 	var orders []order
-	err := r.coll.Session().SQL().Select("id").From("farms").Where("user_id = ?", farmUserId).All(&farmsId)
-	if err != nil {
-		return domain.Orders{}, err
-	}
+	query := r.coll.Session().SQL().
+		Select("orders.*").
+		From("orders").
+		Join("order_items").On("order_items.order_id = orders.id").
+		Join("offers").On("order_items.offer_id = offers.id").
+		Join("farms").On("offers.farm_id = farms.id").
+		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil}).
+		Distinct()
 
-	err = r.coll.Session().SQL().Select("id").From("offers").Where("farm_id IN ?", farmsId).All(&offersId)
-	if err != nil {
-		return domain.Orders{}, err
-	}
-
-	err = r.coll.Session().SQL().Select("order_id").From("order_items").Where("offer_id IN ?", offersId).All(&ordersId)
-	if err != nil {
-		return domain.Orders{}, err
-	}
-
-	err = r.coll.Session().SQL().Select("*").From("orders").Where("id IN ?", ordersId).All(&orders)
+	err := query.All(&orders)
 	if err != nil {
 		return domain.Orders{}, err
 	}
@@ -261,11 +254,12 @@ func (r orderRepository) FindByFarmUserId(farmUserId uint64, p domain.Pagination
 	}
 
 	for i, item := range paginatedOrders.Items {
-		count, err := r.orderItemRepo.Count(item.Id)
+		orderItems, err := r.orderItemRepo.FindAllWithoutPagination(item.Id)
 		if err != nil {
 			return domain.Orders{}, err
 		}
-		paginatedOrders.Items[i].OrderItemsCount = count
+		paginatedOrders.Items[i].OrderItemsCount = uint64(len(orderItems))
+		paginatedOrders.Items[i].OrderItems = orderItems
 	}
 
 	paginatedOrders.Total = uint64(len(orders))
@@ -273,12 +267,35 @@ func (r orderRepository) FindByFarmUserId(farmUserId uint64, p domain.Pagination
 	return paginatedOrders, nil
 }
 
+func (r orderRepository) GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order, error) {
+	activeStatusses := domain.GetActiveOrderStatuses()
+	stringActiveStatusses := make([]string, len(activeStatusses))
+	for i, status := range activeStatusses {
+		stringActiveStatusses[i] = string(status)
+	}
+
+	var activeOrders []order
+	query := r.coll.Session().SQL().Select("orders.*").
+		From("orders").
+		Join("order_items").On("order_items.order_id = orders.id").
+		Join("offers").On("offers.id = order_items.offer_id").
+		Where(db.Cond{"offers.farm_id": farmId, "orders.status IN": stringActiveStatusses, "orders.deleted_date": nil}).
+		Distinct()
+
+	err := query.All(&activeOrders)
+	if err != nil {
+		return []domain.Order{}, err
+	}
+
+	return r.mapModelToDomainCollection(activeOrders), nil
+}
+
 func (r orderRepository) mapDomainToModel(o domain.Order) order {
 
 	return order{
 		Id:            o.Id,
 		Comment:       o.Comment,
-		UserId:        o.UserId,
+		UserId:        o.User.Id,
 		Address:       o.Address,
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
@@ -293,10 +310,16 @@ func (r orderRepository) mapDomainToModel(o domain.Order) order {
 }
 
 func (r orderRepository) mapModelToDomain(o order) domain.Order {
+	var user user
+	err := r.coll.Session().SQL().Select("*").From("users").Where("id = ?", o.UserId).One(&user)
+	if err != nil {
+		return domain.Order{}
+	}
+
 	return domain.Order{
 		Id:            o.Id,
 		Comment:       o.Comment,
-		UserId:        o.UserId,
+		User:          mapModelToDomainUser(user),
 		Address:       o.Address,
 		ProductsPrice: o.ProductsPrice,
 		ShippingPrice: o.ShippingPrice,
@@ -313,9 +336,17 @@ func (r orderRepository) mapModelToDomain(o order) domain.Order {
 
 func MapModelToDomain(ord order) domain.Order {
 	return domain.Order{
-		Id:     ord.Id,
-		UserId: ord.UserId,
+		Id:   ord.Id,
+		User: domain.User{Id: ord.UserId},
 	}
+}
+
+func (f orderRepository) mapModelToDomainCollection(orders []order) []domain.Order {
+	newOrders := make([]domain.Order, len(orders))
+	for i, order := range orders {
+		newOrders[i] = f.mapModelToDomain(order)
+	}
+	return newOrders
 }
 
 func (f orderRepository) mapModelToDomainPagination(orders []order) domain.Orders {

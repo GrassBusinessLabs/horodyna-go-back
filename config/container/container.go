@@ -61,7 +61,7 @@ func New(conf config.Configuration) Container {
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
-	farmService := app.NewFarmService(farmRepository)
+	farmService := app.NewFarmService(farmRepository, offerRepository, orderRepository)
 	catService := app.NewCategoryService()
 	imageStorageService := filesystem.NewImageStorageService(conf.FileStorageLocation)
 	imageService := app.NewImageModelService(ImageRepository, imageStorageService)

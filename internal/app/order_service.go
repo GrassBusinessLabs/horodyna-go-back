@@ -14,7 +14,7 @@ type OrderService interface {
 	FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error)
 	Delete(o domain.Order) error
 	Find(uint64) (interface{}, error)
-	FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
+	FindByFarmerId(farmUserId uint64, p domain.Pagination) (domain.Orders, error)
 	SplitOrderByFarms(order domain.Order) ([]domain.Order, error)
 }
 
@@ -109,8 +109,8 @@ func (s orderService) Delete(order domain.Order) error {
 	return nil
 }
 
-func (s orderService) FindByFarmUserId(farmUserId uint64, p domain.Pagination) (domain.Orders, error) {
-	orders, err := s.orderRepo.FindByFarmUserId(farmUserId, p)
+func (s orderService) FindByFarmerId(farmUserId uint64, p domain.Pagination) (domain.Orders, error) {
+	orders, err := s.orderRepo.GetOrdersByFarmUserId(farmUserId, p)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
 		return domain.Orders{}, err

@@ -40,6 +40,7 @@ type OfferRepository interface {
 	Update(offer domain.Offer) (domain.Offer, error)
 	FindAll(user domain.User, pag domain.Pagination) (domain.Offers, error)
 	FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error)
+	FindOnlyOffersByFarmId(farmId uint64) ([]domain.Offer, error)
 	FindByCategory(category string) ([]domain.Offer, error)
 	Delete(id uint64) error
 }
@@ -130,6 +131,21 @@ func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (do
 	}
 	offers.Total = totalCount
 	offers.Pages = uint(math.Ceil(float64(offers.Total) / float64(p.CountPerPage)))
+	return offers, nil
+}
+
+func (r offerRepository) FindOnlyOffersByFarmId(farmId uint64) ([]domain.Offer, error) {
+	var data []offer
+	err := r.coll.Find(db.Cond{"farm_id": farmId}).All(&data)
+	if err != nil {
+		return []domain.Offer{}, err
+	}
+
+	offers := r.mapModelToDomainMass(data)
+	if err != nil {
+		return []domain.Offer{}, err
+	}
+
 	return offers, nil
 }
 
@@ -227,6 +243,7 @@ func (r offerRepository) mapModelToDomain(o offer) domain.Offer {
 	if err != nil {
 		return domain.Offer{}
 	}
+
 	return domain.Offer{
 		Id:               o.Id,
 		Title:            o.Title,

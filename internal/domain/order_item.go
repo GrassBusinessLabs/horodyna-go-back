@@ -25,5 +25,5 @@ type OrderItems struct {
 }
 
 func (o OrderItem) GetUserId() uint64 {
-	return o.Order.UserId
+	return o.Order.User.Id
 }

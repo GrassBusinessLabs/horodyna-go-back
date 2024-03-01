@@ -32,7 +32,7 @@ func (c OrderController) Save() http.HandlerFunc {
 			return
 		}
 
-		order.UserId = u.Id
+		order.User = u
 		order, err = c.orderService.Save(order)
 		if err != nil {
 			log.Printf("OrderController: %s", err)
@@ -46,15 +46,16 @@ func (c OrderController) Save() http.HandlerFunc {
 
 func (c OrderController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		o := r.Context().Value(OrderKey).(domain.Order)
-		orderItems, err := c.orderItemService.FindAll(o.Id)
+		order := r.Context().Value(OrderKey).(domain.Order)
+		orderItems, err := c.orderItemService.FindAll(order.Id)
 		if err != nil {
 			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(o, orderItems, resources.ImageMDto{}))
+		order.OrderItems = orderItems
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(order))
 	}
 }
 
@@ -75,7 +76,7 @@ func (c OrderController) FindAllByUserId() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDto{}.DomainToDtoPaginatedCollection(orders))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoPaginatedCollection(orders))
 	}
 }
 
@@ -124,14 +125,14 @@ func (c OrderController) FindByFarmUserId() http.HandlerFunc {
 			return
 		}
 
-		orders, err := c.orderService.FindByFarmUserId(u.Id, pagination)
+		orders, err := c.orderService.FindByFarmerId(u.Id, pagination)
 		if err != nil {
 			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
-		Success(w, resources.OrderDto{}.DomainToDtoPaginatedCollection(orders))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoPaginatedCollection(orders))
 	}
 }
 
@@ -204,6 +205,6 @@ func (c OrderController) SplitOrderByFarms() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainWithOrderItemsToDtoCollection(splitedOrders, resources.ImageMDto{}))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoCollection(splitedOrders))
 	}
 }

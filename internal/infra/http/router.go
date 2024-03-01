@@ -118,7 +118,7 @@ func OrderRouter(r chi.Router, oc controllers.OrderController, os app.OrderServi
 		)
 		apiRouter.Get(
 			"/by-farmer",
-			oc.FindAllByUserId(),
+			oc.FindByFarmUserId(),
 		)
 		apiRouter.With(pathObjectMiddleware).Get(
 			"/{orderId}",

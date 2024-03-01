@@ -18,7 +18,7 @@ const (
 type Order struct {
 	Id              uint64
 	Comment         string
-	UserId          uint64
+	User            User
 	Address         *string
 	OrderItems      []OrderItem
 	OrderItemsCount uint64
@@ -40,7 +40,11 @@ type Orders struct {
 }
 
 func (o Order) GetUserId() uint64 {
-	return o.UserId
+	return o.User.Id
+}
+
+func GetActiveOrderStatuses() []OrderStatus {
+	return []OrderStatus{SUBMITTED, APPROVED, SHIPPING}
 }
 
 func (o Order) IsReceiverStatus(stasus OrderStatus) bool {

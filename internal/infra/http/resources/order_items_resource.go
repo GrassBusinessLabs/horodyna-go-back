@@ -15,7 +15,7 @@ type OrderItemDto struct {
 	Farm       FarmWithOutDto `json:"farm"`
 }
 
-func (d OrderItemDto) DomainToDto(o domain.OrderItem, imageDto ImageMDto) OrderItemDto {
+func (d OrderItemDto) DomainToDto(o domain.OrderItem) OrderItemDto {
 	return OrderItemDto{
 		Id:         o.Id,
 		OrderId:    o.Order.Id,
@@ -24,6 +24,6 @@ func (d OrderItemDto) DomainToDto(o domain.OrderItem, imageDto ImageMDto) OrderI
 		Price:      o.Price,
 		TotalPrice: o.TotalPrice,
 		Amount:     o.Amount,
-		Farm:       FarmWithOutDto{}.DomainToDto(o.Farm, imageDto),
+		Farm:       FarmWithOutDto{}.DomainToDto(o.Farm),
 	}
 }
