@@ -269,3 +269,17 @@ func (c OrderController) DeleteSplitedOrder() http.HandlerFunc {
 		Ok(w)
 	}
 }
+
+func (c OrderController) GetFarmerOrdersPercentage() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user := r.Context().Value(UserKey).(domain.User)
+		ordersPercentage, total, err := c.orderService.GetFarmerOdersPercentage(user.Id)
+		if err != nil {
+			log.Printf("OrderController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
+
+		Success(w, resources.OrdersPercentageDto{}.DataToDto(ordersPercentage, total))
+	}
+}

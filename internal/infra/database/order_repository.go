@@ -39,6 +39,7 @@ type OrderRepository interface {
 	SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error)
 	DeleteSplitedOrder(order domain.Order, farmId uint64) error
 	GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order, error)
+	GetFarmerOdersPercentage(farmUserId uint64) (map[uint64]float64, float64, error)
 }
 
 type orderRepository struct {
@@ -354,6 +355,32 @@ func (r orderRepository) GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order,
 	}
 
 	return r.mapModelToDomainCollection(activeOrders), nil
+}
+
+func (r orderRepository) GetFarmerOdersPercentage(farmUserId uint64) (map[uint64]float64, float64, error) {
+	var orders []order
+	query := r.coll.Session().SQL().
+		Select("orders.*").
+		From("orders").
+		Join("order_items").On("order_items.order_id = orders.id").
+		Join("offers").On("order_items.offer_id = offers.id").
+		Join("farms").On("offers.farm_id = farms.id").
+		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil, "orders.status": "COMPLETED"}).
+		Distinct()
+	err := query.All(&orders)
+	if err != nil {
+		return map[uint64]float64{}, 0, err
+	}
+
+	var total float64 = 0
+	ordersPercentage := map[uint64]float64{}
+	for _, order := range orders {
+		percentage := order.TotalPrice / 10
+		total += percentage
+		ordersPercentage[order.Id] = percentage
+	}
+
+	return ordersPercentage, total, nil
 }
 
 func (r orderRepository) mapDomainToModel(o domain.Order) order {

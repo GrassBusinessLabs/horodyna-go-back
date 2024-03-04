@@ -34,6 +34,11 @@ type SplitedOrdersDto struct {
 	SplitedOrders map[uint64]OrderDtoWithOrderItems `json:"splited_orders"`
 }
 
+type OrdersPercentageDto struct {
+	Total            float64            `json:"total"`
+	OrdersPercentage map[uint64]float64 `json:"orders_percentage"`
+}
+
 type OrdersDto struct {
 	Items []OrderDto `json:"items"`
 	Pages uint       `json:"pages"`
@@ -129,4 +134,11 @@ func (d SplitedOrdersDto) DomainToDto(splitedOrders map[uint64]domain.Order) Spl
 	}
 
 	return SplitedOrdersDto{SplitedOrders: splitedOrdersDto}
+}
+
+func (d OrdersPercentageDto) DataToDto(ordersPercentage map[uint64]float64, total float64) OrdersPercentageDto {
+	return OrdersPercentageDto{
+		Total:            total,
+		OrdersPercentage: ordersPercentage,
+	}
 }
