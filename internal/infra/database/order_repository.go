@@ -188,7 +188,10 @@ func (r orderRepository) DeleteSplitedOrder(order domain.Order, farmId uint64) e
 	}
 
 	for _, orderItem := range splitedOrder.OrderItems {
-		r.orderItemRepo.Delete(orderItem.Id)
+		err = r.orderItemRepo.Delete(orderItem.Id)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = r.Recalculate(order.Id)
