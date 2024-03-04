@@ -58,6 +58,7 @@ func Router(cont container.Container) http.Handler {
 				OrderRouter(apiRouter, cont.OrderController, cont.OrderService, cont.FarmService)
 				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
 				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
+				AddressRouter(apiRouter, cont.AddressController, cont.AddressService)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -230,6 +231,34 @@ func OfferRouter(r chi.Router, oc controllers.OfferController, os app.OfferServi
 		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
 			"/{offerId}",
 			oc.Update(),
+		)
+	})
+}
+
+func AddressRouter(r chi.Router, ac controllers.AddressController, as app.AddressService) {
+	pathObjectMiddleware := middlewares.PathObject("addressId", controllers.AddressKey, as)
+	isOwnerMiddleware := middlewares.IsOwnerMiddleware[domain.Address](controllers.AddressKey)
+
+	r.Route("/address", func(apiRouter chi.Router) {
+		apiRouter.Post(
+			"/",
+			ac.Save(),
+		)
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{addressId}",
+			ac.FindById(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Put(
+			"/{addressId}",
+			ac.Update(),
+		)
+		apiRouter.With(pathObjectMiddleware, isOwnerMiddleware).Delete(
+			"/{addressId}",
+			ac.Delete(),
+		)
+		apiRouter.Get(
+			"/by-user/{userId}",
+			ac.FindAllByUserId(),
 		)
 	})
 }
