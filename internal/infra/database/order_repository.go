@@ -307,7 +307,7 @@ func (r orderRepository) GetOrdersByFarmUserId(farmUserId uint64, p domain.Pagin
 		Join("order_items").On("order_items.order_id = orders.id").
 		Join("offers").On("order_items.offer_id = offers.id").
 		Join("farms").On("offers.farm_id = farms.id").
-		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil}).
+		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil, "status !=": "DRAFT"}).
 		Distinct()
 
 	err := query.All(&orders)
