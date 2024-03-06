@@ -1,0 +1,2 @@
+ALTER TABLE address 
+DROP CONSTRAINT IF EXISTS user_id_unique;

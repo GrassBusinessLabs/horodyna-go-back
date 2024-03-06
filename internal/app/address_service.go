@@ -9,7 +9,7 @@ import (
 type AddressService interface {
 	Save(address domain.Address) (domain.Address, error)
 	Find(uint64) (interface{}, error)
-	FindAllByUserId(userId uint64) ([]domain.Address, error)
+	FindByUserId(userId uint64) (domain.Address, error)
 	Update(address domain.Address) (domain.Address, error)
 	Delete(id uint64) error
 }
@@ -43,14 +43,14 @@ func (s addressService) Find(id uint64) (interface{}, error) {
 	return f, err
 }
 
-func (s addressService) FindAllByUserId(userId uint64) ([]domain.Address, error) {
-	addresses, err := s.addressRepo.FindAllByUserId(userId)
+func (s addressService) FindByUserId(userId uint64) (domain.Address, error) {
+	address, err := s.addressRepo.FindByUserId(userId)
 	if err != nil {
 		log.Printf("AddressService: %s", err)
-		return []domain.Address{}, err
+		return domain.Address{}, err
 	}
 
-	return addresses, nil
+	return address, nil
 }
 
 func (s addressService) Update(address domain.Address) (domain.Address, error) {

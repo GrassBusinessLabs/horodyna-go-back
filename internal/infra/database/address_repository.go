@@ -27,7 +27,7 @@ type address struct {
 type AddressRepository interface {
 	Save(address domain.Address) (domain.Address, error)
 	FindById(id uint64) (domain.Address, error)
-	FindAllByUserId(userId uint64) ([]domain.Address, error)
+	FindByUserId(userId uint64) (domain.Address, error)
 	Update(address domain.Address) (domain.Address, error)
 	Delete(id uint64) error
 }
@@ -97,25 +97,20 @@ func (r addressRepository) FindById(id uint64) (domain.Address, error) {
 	return address, nil
 }
 
-func (r addressRepository) FindAllByUserId(userId uint64) ([]domain.Address, error) {
-	var addressModels []address
-	err := r.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil}).All(&addressModels)
+func (r addressRepository) FindByUserId(userId uint64) (domain.Address, error) {
+	var addressModel address
+	err := r.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil}).One(&addressModel)
 	if err != nil {
-		return []domain.Address{}, err
+		return domain.Address{}, err
 	}
 
 	var userModel user
 	err = r.coll.Session().SQL().Select("*").From("users").Where(db.Cond{"id": userId}).One(&userModel)
 	if err != nil {
-		return []domain.Address{}, err
+		return domain.Address{}, err
 	}
 
-	addresses := []domain.Address{}
-	for _, addressModel := range addressModels {
-		addresses = append(addresses, r.mapModelToDomain(addressModel, userModel))
-	}
-
-	return addresses, nil
+	return r.mapModelToDomain(addressModel, userModel), nil
 }
 
 func (r addressRepository) Delete(id uint64) error {

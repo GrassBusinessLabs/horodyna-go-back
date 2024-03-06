@@ -77,6 +77,8 @@ func (s orderService) FindAllByUserId(userId uint64, pag domain.Pagination) (dom
 
 func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, error) {
 	ord.Address = req.Address
+	ord.PostOffice = req.PostOffice
+	ord.Ttn = req.Ttn
 	ord.Comment = req.Comment
 	if ord.ShippingPrice != req.ShippingPrice {
 		ord.TotalPrice = req.ShippingPrice + ord.ProductsPrice

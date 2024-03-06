@@ -262,7 +262,7 @@ func AddressRouter(r chi.Router, ac controllers.AddressController, as app.Addres
 		)
 		apiRouter.Get(
 			"/by-user/{userId}",
-			ac.FindAllByUserId(),
+			ac.FindByUserId(),
 		)
 	})
 }

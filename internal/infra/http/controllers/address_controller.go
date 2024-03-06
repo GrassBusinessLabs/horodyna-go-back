@@ -92,7 +92,7 @@ func (c AddressController) FindById() http.HandlerFunc {
 	}
 }
 
-func (c AddressController) FindAllByUserId() http.HandlerFunc {
+func (c AddressController) FindByUserId() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userId, err := strconv.ParseUint(chi.URLParam(r, "userId"), 10, 64)
 		if err != nil {
@@ -101,13 +101,13 @@ func (c AddressController) FindAllByUserId() http.HandlerFunc {
 			return
 		}
 
-		addresses, err := c.addressService.FindAllByUserId(userId)
+		address, err := c.addressService.FindByUserId(userId)
 		if err != nil {
 			log.Printf("OrderController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
-		Success(w, resources.AddressDto{}.DomainToDtoCollection(addresses))
+		Success(w, resources.AddressDto{}.DomainToDto(address))
 	}
 }
