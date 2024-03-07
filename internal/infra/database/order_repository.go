@@ -221,7 +221,7 @@ func (r orderRepository) FindById(id uint64) (domain.Order, error) {
 
 func (r orderRepository) FindAllByUserId(userId uint64, p domain.Pagination) (domain.Orders, error) {
 	var data []order
-	query := r.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil})
+	query := r.coll.Find(db.Cond{"user_id": userId, "deleted_date": nil}).OrderBy("created_date")
 	res := query.Paginate(uint(p.CountPerPage))
 	err := res.Page(uint(p.Page)).All(&data)
 	if err != nil {
@@ -308,6 +308,7 @@ func (r orderRepository) GetOrdersByFarmUserId(farmUserId uint64, p domain.Pagin
 		Join("offers").On("order_items.offer_id = offers.id").
 		Join("farms").On("offers.farm_id = farms.id").
 		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil, "orders.status !=": "DRAFT"}).
+		OrderBy("created_date").
 		Distinct()
 
 	err := query.All(&orders)

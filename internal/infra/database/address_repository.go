@@ -2,7 +2,6 @@ package database
 
 import (
 	"boilerplate/internal/domain"
-	"log"
 	"time"
 
 	"github.com/upper/db/v4"
@@ -19,6 +18,7 @@ type address struct {
 	Department  string     `db:"department"`
 	Lat         float64    `db:"lat"`
 	Lon         float64    `db:"lon"`
+	CityRef     *string    `db:"city_ref"`
 	CreatedDate time.Time  `db:"created_date,omitempty"`
 	UpdatedDate time.Time  `db:"updated_date,omitempty"`
 	DeletedDate *time.Time `db:"deleted_date,omitempty"`
@@ -64,14 +64,12 @@ func (r addressRepository) Update(address domain.Address) (domain.Address, error
 	addressModel := r.mapDomainToModel(address)
 	address.UpdatedDate = time.Now()
 	err := r.coll.Find(db.Cond{"id": addressModel.Id}).Update(&addressModel)
-	log.Print(addressModel.Id)
 	if err != nil {
 		return domain.Address{}, err
 	}
 
 	var userModel user
 	err = r.coll.Session().SQL().Select("*").From("users").Where(db.Cond{"id": addressModel.UserId}).One(&userModel)
-	log.Print(addressModel.UserId)
 	if err != nil {
 		return domain.Address{}, err
 	}
@@ -126,6 +124,7 @@ func (r addressRepository) mapDomainToModel(d domain.Address) address {
 		Department:  d.Department,
 		Lon:         d.Lon,
 		Lat:         d.Lat,
+		CityRef:     d.CityRef,
 		CreatedDate: d.CreatedDate,
 		UpdatedDate: d.UpdatedDate,
 		DeletedDate: d.DeletedDate,
@@ -141,6 +140,7 @@ func (r addressRepository) mapModelToDomain(m address, userModel user) domain.Ad
 		Department:  m.Department,
 		Lon:         m.Lon,
 		Lat:         m.Lat,
+		CityRef:     m.CityRef,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,

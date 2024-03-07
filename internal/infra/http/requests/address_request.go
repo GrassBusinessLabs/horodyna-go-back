@@ -11,6 +11,7 @@ type AddressRequest struct {
 	Department string  `json:"department" validate:"required"`
 	Lat        float64 `json:"lat" validate:"required"`
 	Lon        float64 `json:"lon" validate:"required"`
+	CityRef    *string `json:"city_ref" validate:"required"`
 }
 
 func (r AddressRequest) ToDomainModel() (interface{}, error) {
@@ -21,5 +22,6 @@ func (r AddressRequest) ToDomainModel() (interface{}, error) {
 		Department: r.Department,
 		Lat:        r.Lat,
 		Lon:        r.Lon,
+		CityRef:    r.CityRef,
 	}, nil
 }

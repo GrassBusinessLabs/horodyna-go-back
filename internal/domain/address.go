@@ -13,6 +13,7 @@ type Address struct {
 	Department  string
 	Lat         float64
 	Lon         float64
+	CityRef     *string
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate *time.Time

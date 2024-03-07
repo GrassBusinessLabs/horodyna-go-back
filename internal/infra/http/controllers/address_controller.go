@@ -60,6 +60,7 @@ func (c AddressController) Update() http.HandlerFunc {
 		addressInstance.Department = address.Department
 		addressInstance.Lat = address.Lat
 		addressInstance.Lon = address.Lon
+		addressInstance.CityRef = address.CityRef
 		address, err = c.addressService.Update(addressInstance)
 		if err != nil {
 			log.Printf("AddressController: %s", err)

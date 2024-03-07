@@ -13,6 +13,7 @@ type AddressDto struct {
 	Department string  `json:"department"`
 	Lat        float64 `json:"lat"`
 	Lon        float64 `json:"lon"`
+	CityRef    *string `json:"city_ref"`
 }
 
 func (d AddressDto) DomainToDto(address domain.Address) AddressDto {
@@ -25,6 +26,7 @@ func (d AddressDto) DomainToDto(address domain.Address) AddressDto {
 		Department: address.Department,
 		Lat:        address.Lat,
 		Lon:        address.Lon,
+		CityRef:    address.CityRef,
 	}
 }
 
