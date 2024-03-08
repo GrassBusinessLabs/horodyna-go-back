@@ -35,6 +35,8 @@ type Services struct {
 	app.OrderItemsService
 	app.ImageModelService
 	app.AddressService
+	app.InvoiceService
+	app.MonobankService
 }
 
 type Controllers struct {
@@ -47,6 +49,8 @@ type Controllers struct {
 	controllers.OrderItemController
 	controllers.ImageModelController
 	controllers.AddressController
+	controllers.InvoiceController
+	controllers.MonobankController
 }
 
 func New(conf config.Configuration) Container {
@@ -61,6 +65,7 @@ func New(conf config.Configuration) Container {
 	orderRepository := database.NewOrderRepository(sess, orderItemRepository)
 	ImageRepository := database.NewImageModelRepository(sess)
 	addressRepository := database.NewAddressRepository(sess)
+	invoiceRepository := database.NewInvoiceRepository(sess)
 
 	userService := app.NewUserService(userRepository)
 	authService := app.NewAuthService(sessionRepository, userService, conf, tknAuth)
@@ -72,6 +77,8 @@ func New(conf config.Configuration) Container {
 	orderService := app.NewOrderService(orderRepository, orderItemRepository)
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
 	addressService := app.NewAddressService(addressRepository)
+	invoiceService := app.NewInvoiceService(invoiceRepository)
+	monobankService := app.NewMonobankService("", invoiceService)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)
@@ -82,6 +89,8 @@ func New(conf config.Configuration) Container {
 	orderItemController := controllers.NewOrderItemController(orderItemService)
 	imageController := controllers.NewImageModelController(imageService)
 	addressController := controllers.NewAddressController(addressService)
+	invoiceController := controllers.NewInvoiceController(invoiceService)
+	monobankController := controllers.NewMonobankController(monobankService)
 
 	authMiddleware := middlewares.AuthMiddleware(tknAuth, authService, userService)
 
@@ -99,6 +108,8 @@ func New(conf config.Configuration) Container {
 			orderItemService,
 			imageService,
 			addressService,
+			invoiceService,
+			monobankService,
 		},
 		Controllers: Controllers{
 			authController,
@@ -110,6 +121,8 @@ func New(conf config.Configuration) Container {
 			orderItemController,
 			imageController,
 			addressController,
+			invoiceController,
+			monobankController,
 		},
 	}
 }

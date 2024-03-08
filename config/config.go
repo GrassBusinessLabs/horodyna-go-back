@@ -17,6 +17,7 @@ type Configuration struct {
 	FileStorageLocation string
 	JwtSecret           string
 	JwtTTL              time.Duration
+	MonobankPrivateKey  string // Токен з особистого кабінету https://web.monobank.ua/ або тестовий токен з https://api.monobank.ua/
 }
 
 func GetConfiguration() Configuration {
@@ -30,6 +31,7 @@ func GetConfiguration() Configuration {
 		FileStorageLocation: getOrDefault("FILES_LOCATION", "file_storage"),
 		JwtSecret:           getOrDefault("JWT_SECRET", "1234567890"),
 		JwtTTL:              72 * time.Hour,
+		MonobankPrivateKey:  "key_right_here",
 	}
 }
 

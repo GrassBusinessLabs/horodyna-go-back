@@ -59,6 +59,8 @@ func Router(cont container.Container) http.Handler {
 				OrderItemRoute(apiRouter, cont.OrderItemController, cont.OrderService, cont.OrderItemsService)
 				ImageRouter(apiRouter, cont.ImageModelController, cont.ImageModelService)
 				AddressRouter(apiRouter, cont.AddressController, cont.AddressService)
+				InvoiceRouter(apiRouter, cont.InvoiceController, cont.InvoiceService)
+				MonobankRouter(apiRouter, cont.MonobankController)
 
 				apiRouter.Handle("/*", NotFoundJSON())
 			})
@@ -323,6 +325,43 @@ func ImageRouter(r chi.Router, ic controllers.ImageModelController, is app.Image
 		apiRouter.With(pathObjectMiddleware).Delete(
 			"/{imageId}",
 			ic.Delete(),
+		)
+	})
+
+}
+
+func InvoiceRouter(r chi.Router, ic controllers.InvoiceController, is app.InvoiceService) {
+	pathObjectMiddleware := middlewares.PathObject("invoiceId", controllers.InvoiceKey, is)
+	r.Route("/invoice", func(apiRouter chi.Router) {
+		apiRouter.Get(
+			"/",
+			ic.FindAll(),
+		)
+		apiRouter.With(pathObjectMiddleware).Get(
+			"/{invoiceId}",
+			ic.FindById(),
+		)
+		apiRouter.Get(
+			"/last-day",
+			ic.FindAllUpdatedWithinOneDay(),
+		)
+	})
+
+}
+
+func MonobankRouter(r chi.Router, mc controllers.MonobankController) {
+	r.Route("/monobank", func(apiRouter chi.Router) {
+		apiRouter.Post(
+			"/",
+			mc.CreateInvoice(),
+		)
+		apiRouter.Get(
+			"/{invoiceId}",
+			mc.GetInvoiceData(),
+		)
+		apiRouter.Post(
+			"/cancel",
+			mc.CreateInvoice(),
 		)
 	})
 
