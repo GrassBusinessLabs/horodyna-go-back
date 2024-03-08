@@ -28,6 +28,7 @@ type Order struct {
 	Status          OrderStatus
 	PostOffice      *string
 	Ttn             *string
+	Percentage      *float64
 	CreatedDate     time.Time
 	UpdatedDate     time.Time
 	DeletedDate     *time.Time

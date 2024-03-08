@@ -18,7 +18,7 @@ type OrderService interface {
 	SplitOrderByFarms(order domain.Order) (map[uint64]domain.Order, error)
 	SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error)
 	DeleteSplitedOrder(order domain.Order, farmId uint64) error
-	GetFarmerOdersPercentage(farmUserId uint64) (map[uint64]float64, float64, error)
+	GetFarmerOdersPercentage(farmUserId uint64) ([]domain.Order, float64, error)
 }
 
 func NewOrderService(or database.OrderRepository, oir database.OrderItemRepository) OrderService {
@@ -161,12 +161,12 @@ func (s orderService) DeleteSplitedOrder(order domain.Order, farmId uint64) erro
 	return nil
 }
 
-func (s orderService) GetFarmerOdersPercentage(farmUserId uint64) (map[uint64]float64, float64, error) {
-	ordersPercentage, total, err := s.orderRepo.GetFarmerOdersPercentage(farmUserId)
+func (s orderService) GetFarmerOdersPercentage(farmUserId uint64) ([]domain.Order, float64, error) {
+	orders, total, err := s.orderRepo.GetFarmerOdersPercentage(farmUserId)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
-		return map[uint64]float64{}, 0, err
+		return []domain.Order{}, 0, err
 	}
 
-	return ordersPercentage, total, nil
+	return orders, total, nil
 }
