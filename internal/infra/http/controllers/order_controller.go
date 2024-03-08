@@ -280,6 +280,6 @@ func (c OrderController) GetFarmerOrdersPercentage() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrdersPercentageDto{}.DomainToDto(orders, total))
+		Success(w, resources.OrdersDtoWithPercentage{}.DomainToDto(orders, total))
 	}
 }

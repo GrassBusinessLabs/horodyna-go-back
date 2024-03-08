@@ -375,9 +375,9 @@ func (r orderRepository) GetFarmerOdersPercentage(farmUserId uint64) ([]domain.O
 
 	domainOrders := r.mapModelToDomainCollection(orders)
 	var total float64 = 0
-	for _, domainOrder := range domainOrders {
+	for i, domainOrder := range domainOrders {
 		percentage := domainOrder.TotalPrice / 10
-		domainOrder.Percentage = &percentage
+		domainOrders[i].Percentage = &percentage
 		total += percentage
 	}
 

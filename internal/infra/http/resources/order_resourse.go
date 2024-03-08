@@ -141,6 +141,18 @@ type OrderDtoWithPercentage struct {
 	Percenatge      *float64 `json:"percentage"`
 }
 
+type OrdersDtoWithPercentage struct {
+	Total float64                  `json:"total"`
+	Items []OrderDtoWithPercentage `json:"items"`
+}
+
+func (d OrdersDtoWithPercentage) DomainToDto(orders []domain.Order, total float64) OrdersDtoWithPercentage {
+	return OrdersDtoWithPercentage{
+		Total: total,
+		Items: OrderDtoWithPercentage{}.DomainToDtoCollection(orders),
+	}
+}
+
 func (d OrderDtoWithPercentage) DomainToDto(order domain.Order) OrderDtoWithPercentage {
 	return OrderDtoWithPercentage{
 		Id:              order.Id,
@@ -181,16 +193,4 @@ func (d SplitedOrdersDto) DomainToDto(splitedOrders map[uint64]domain.Order) Spl
 	}
 
 	return SplitedOrdersDto{SplitedOrders: splitedOrdersDto}
-}
-
-type OrdersPercentageDto struct {
-	Total            float64                  `json:"total"`
-	OrdersPercentage []OrderDtoWithPercentage `json:"orders_percentage"`
-}
-
-func (d OrdersPercentageDto) DomainToDto(orders []domain.Order, total float64) OrdersPercentageDto {
-	return OrdersPercentageDto{
-		Total:            total,
-		OrdersPercentage: OrderDtoWithPercentage{}.DomainToDtoCollection(orders),
-	}
 }
