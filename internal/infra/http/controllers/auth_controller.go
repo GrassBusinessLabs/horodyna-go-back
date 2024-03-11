@@ -63,6 +63,26 @@ func (c AuthController) Login() http.HandlerFunc {
 	}
 }
 
+func (c AuthController) LoginWithEmail() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, err := requests.Bind(r, requests.EmailAuthRequest{}, domain.User{})
+		if err != nil {
+			log.Printf("AuthController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+
+		u, token, err := c.authService.LoginWithEmail(user)
+		if err != nil {
+			Unauthorized(w, err)
+			return
+		}
+
+		var authDto resources.AuthDto
+		Success(w, authDto.DomainToDto(token, u))
+	}
+}
+
 func (c AuthController) Logout() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sess := r.Context().Value(SessKey).(domain.Session)

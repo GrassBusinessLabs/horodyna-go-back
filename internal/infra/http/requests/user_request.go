@@ -16,6 +16,11 @@ type AuthRequest struct {
 	Password    string `json:"password" validate:"required,alphanum,gte=4"`
 }
 
+type EmailAuthRequest struct {
+	Email    string `json:"email" validate:"email,required"`
+	Password string `json:"password" validate:"required,alphanum,gte=4"`
+}
+
 type UpdateUserRequest struct {
 	Name    string `json:"name" validate:"required,gte=1,max=40"`
 	From    string `json:"from" validate:"required,email"`
@@ -51,6 +56,13 @@ func (r AuthRequest) ToDomainModel() (interface{}, error) {
 	return domain.User{
 		PhoneNumber: &r.PhoneNumber,
 		Password:    r.Password,
+	}, nil
+}
+
+func (r EmailAuthRequest) ToDomainModel() (interface{}, error) {
+	return domain.User{
+		Email:    r.Email,
+		Password: r.Password,
 	}, nil
 }
 

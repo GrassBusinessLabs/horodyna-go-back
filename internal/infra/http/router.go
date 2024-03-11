@@ -279,6 +279,10 @@ func AuthRouter(r chi.Router, ac controllers.AuthController, amw func(http.Handl
 			"/login",
 			ac.Login(),
 		)
+		apiRouter.Post(
+			"/login-email",
+			ac.LoginWithEmail(),
+		)
 		apiRouter.With(amw).Post(
 			"/change-pwd",
 			ac.ChangePassword(),

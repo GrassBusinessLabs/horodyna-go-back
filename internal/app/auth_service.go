@@ -16,6 +16,7 @@ import (
 type AuthService interface {
 	Register(user domain.User) (domain.User, string, error)
 	Login(user domain.User) (domain.User, string, error)
+	LoginWithEmail(user domain.User) (domain.User, string, error)
 	ChangePassword(user domain.User, req domain.ChangePassword, sess domain.Session) error
 	Logout(sess domain.Session) error
 	Check(sess domain.Session) error
@@ -58,6 +59,25 @@ func (s authService) Register(user domain.User) (domain.User, string, error) {
 
 func (s authService) Login(user domain.User) (domain.User, string, error) {
 	u, err := s.userService.FindByPhoneNumber(*user.PhoneNumber)
+	if err != nil {
+		if errors.Is(err, db.ErrNoMoreRows) {
+			log.Printf("AuthService: failed to find user %s", err)
+		}
+		log.Printf("AuthService: login error %s", err)
+		return domain.User{}, "", err
+	}
+
+	valid := s.checkPasswordHash(user.Password, u.Password)
+	if !valid {
+		return domain.User{}, "", errors.New("invalid credentials")
+	}
+
+	token, err := s.GenerateJwt(u)
+	return u, token, err
+}
+
+func (s authService) LoginWithEmail(user domain.User) (domain.User, string, error) {
+	u, err := s.userService.FindByEmail(user.Email)
 	if err != nil {
 		if errors.Is(err, db.ErrNoMoreRows) {
 			log.Printf("AuthService: failed to find user %s", err)
