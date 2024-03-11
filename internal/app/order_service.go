@@ -21,16 +21,18 @@ type OrderService interface {
 	GetFarmerOdersPercentage(farmUserId uint64) ([]domain.Order, float64, error)
 }
 
-func NewOrderService(or database.OrderRepository, oir database.OrderItemRepository) OrderService {
+func NewOrderService(or database.OrderRepository, oir database.OrderItemRepository, ar database.AddressRepository) OrderService {
 	return orderService{
 		orderRepo:     or,
 		orderItemRepo: oir,
+		addressRepo:   ar,
 	}
 }
 
 type orderService struct {
 	orderRepo     database.OrderRepository
 	orderItemRepo database.OrderItemRepository
+	addressRepo   database.AddressRepository
 }
 
 func (s orderService) Find(id uint64) (interface{}, error) {
@@ -45,6 +47,11 @@ func (s orderService) Find(id uint64) (interface{}, error) {
 
 func (s orderService) Save(ord domain.Order) (domain.Order, error) {
 	ord.Status = domain.DRAFT
+	if ord.Address == nil {
+		address, _ := s.addressRepo.FindByUserId(ord.User.Id)
+		ord.Address = &address.Address
+	}
+
 	o, err := s.orderRepo.Save(ord)
 	if err != nil {
 		log.Printf("OrderService: %s", err)
@@ -78,6 +85,7 @@ func (s orderService) FindAllByUserId(userId uint64, pag domain.Pagination) (dom
 func (s orderService) Update(ord domain.Order, req domain.Order) (domain.Order, error) {
 	ord.Address = req.Address
 	ord.PostOffice = req.PostOffice
+	ord.PostOfficeCity = req.PostOfficeCity
 	ord.Ttn = req.Ttn
 	ord.Comment = req.Comment
 	if ord.ShippingPrice != req.ShippingPrice {

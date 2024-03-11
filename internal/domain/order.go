@@ -27,6 +27,7 @@ type Order struct {
 	TotalPrice      float64
 	Status          OrderStatus
 	PostOffice      *string
+	PostOfficeCity  *string
 	Ttn             *string
 	Percentage      *float64
 	CreatedDate     time.Time

@@ -15,6 +15,7 @@ type OrderDto struct {
 	ShippingPrice   float64 `json:"shipping_price"`
 	TotalPrice      float64 `json:"total_price"`
 	PostOffice      *string `json:"post_office"`
+	PostOfficeCity  *string `json:"post_office_city"`
 	Ttn             *string `json:"ttn"`
 	CreatedDate     string  `json:"created_data"`
 }
@@ -37,6 +38,7 @@ func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 		ShippingPrice:   order.ShippingPrice,
 		TotalPrice:      order.TotalPrice,
 		PostOffice:      order.PostOffice,
+		PostOfficeCity:  order.PostOfficeCity,
 		Ttn:             order.Ttn,
 		CreatedDate:     order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -63,18 +65,19 @@ func (d OrderDto) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDto
 }
 
 type OrderDtoWithOrderItems struct {
-	Id            uint64         `json:"id"`
-	OrderItems    []OrderItemDto `json:"order_items"`
-	Status        string         `json:"status"`
-	Comment       string         `json:"comment"`
-	Address       *string        `json:"address"`
-	User          UserDto        `json:"user"`
-	ProductPrice  float64        `json:"product_price"`
-	ShippingPrice float64        `json:"shipping_price"`
-	TotalPrice    float64        `json:"total_price"`
-	PostOffice    *string        `json:"post_office"`
-	Ttn           *string        `json:"ttn"`
-	CreatedDate   string         `json:"created_data"`
+	Id             uint64         `json:"id"`
+	OrderItems     []OrderItemDto `json:"order_items"`
+	Status         string         `json:"status"`
+	Comment        string         `json:"comment"`
+	Address        *string        `json:"address"`
+	User           UserDto        `json:"user"`
+	ProductPrice   float64        `json:"product_price"`
+	ShippingPrice  float64        `json:"shipping_price"`
+	TotalPrice     float64        `json:"total_price"`
+	PostOffice     *string        `json:"post_office"`
+	PostOfficeCity *string        `json:"post_office_city"`
+	Ttn            *string        `json:"ttn"`
+	CreatedDate    string         `json:"created_data"`
 }
 
 func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order) OrderDtoWithOrderItems {
@@ -84,18 +87,19 @@ func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order) OrderDtoWithOrde
 	}
 
 	return OrderDtoWithOrderItems{
-		Id:            order.Id,
-		OrderItems:    orderItems,
-		Status:        string(order.Status),
-		Comment:       order.Comment,
-		Address:       order.Address,
-		User:          UserDto{}.DomainToDto(order.User),
-		ProductPrice:  order.ProductsPrice,
-		ShippingPrice: order.ShippingPrice,
-		TotalPrice:    order.TotalPrice,
-		PostOffice:    order.PostOffice,
-		Ttn:           order.Ttn,
-		CreatedDate:   order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
+		Id:             order.Id,
+		OrderItems:     orderItems,
+		Status:         string(order.Status),
+		Comment:        order.Comment,
+		Address:        order.Address,
+		User:           UserDto{}.DomainToDto(order.User),
+		ProductPrice:   order.ProductsPrice,
+		ShippingPrice:  order.ShippingPrice,
+		TotalPrice:     order.TotalPrice,
+		PostOffice:     order.PostOffice,
+		PostOfficeCity: order.PostOfficeCity,
+		Ttn:            order.Ttn,
+		CreatedDate:    order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
 
@@ -136,6 +140,7 @@ type OrderDtoWithPercentage struct {
 	ShippingPrice   float64  `json:"shipping_price"`
 	TotalPrice      float64  `json:"total_price"`
 	PostOffice      *string  `json:"post_office"`
+	PostOfficeCity  *string  `json:"post_office_city"`
 	Ttn             *string  `json:"ttn"`
 	CreatedDate     string   `json:"created_data"`
 	Percenatge      *float64 `json:"percentage"`
@@ -165,6 +170,7 @@ func (d OrderDtoWithPercentage) DomainToDto(order domain.Order) OrderDtoWithPerc
 		ShippingPrice:   order.ShippingPrice,
 		TotalPrice:      order.TotalPrice,
 		PostOffice:      order.PostOffice,
+		PostOfficeCity:  order.PostOfficeCity,
 		Ttn:             order.Ttn,
 		CreatedDate:     order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
 		Percenatge:      order.Percentage,

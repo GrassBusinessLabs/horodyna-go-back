@@ -5,20 +5,22 @@ import (
 )
 
 type OrderRequest struct {
-	OrderItems    []OrderItemRequest `json:"order_items"`
-	Address       *string            `json:"address" validate:"required"`
-	Comment       string             `json:"comment"`
-	ShippingPrice float64            `json:"shipping_price"`
-	PostOffice    *string            `json:"post_office"`
-	Ttn           *string            `json:"ttn"`
+	OrderItems     []OrderItemRequest `json:"order_items"`
+	Address        *string            `json:"address"`
+	Comment        string             `json:"comment"`
+	ShippingPrice  float64            `json:"shipping_price"`
+	PostOffice     *string            `json:"post_office"`
+	PostOfficeCity *string            `json:"post_office_city"`
+	Ttn            *string            `json:"ttn"`
 }
 
 type UpdateOrderRequest struct {
-	Address       *string `json:"address" validate:"required"`
-	Comment       string  `json:"comment"`
-	ShippingPrice float64 `json:"shipping_price"`
-	PostOffice    *string `json:"post_office"`
-	Ttn           *string `json:"ttn"`
+	Address        *string `json:"address"`
+	Comment        string  `json:"comment"`
+	ShippingPrice  float64 `json:"shipping_price"`
+	PostOffice     *string `json:"post_office"`
+	PostOfficeCity *string `json:"post_office_city"`
+	Ttn            *string `json:"ttn"`
 }
 
 type OrderStatusRequest struct {
@@ -27,11 +29,12 @@ type OrderStatusRequest struct {
 
 func (m UpdateOrderRequest) ToDomainModel() (interface{}, error) {
 	return domain.Order{
-		Address:       m.Address,
-		Comment:       m.Comment,
-		ShippingPrice: m.ShippingPrice,
-		PostOffice:    m.PostOffice,
-		Ttn:           m.Ttn,
+		Address:        m.Address,
+		Comment:        m.Comment,
+		ShippingPrice:  m.ShippingPrice,
+		PostOffice:     m.PostOffice,
+		PostOfficeCity: m.PostOfficeCity,
+		Ttn:            m.Ttn,
 	}, nil
 }
 
@@ -42,12 +45,13 @@ func (m OrderRequest) ToDomainModel() (interface{}, error) {
 	}
 
 	return domain.Order{
-		Address:       m.Address,
-		Comment:       m.Comment,
-		ShippingPrice: m.ShippingPrice,
-		OrderItems:    orderItems,
-		PostOffice:    m.PostOffice,
-		Ttn:           m.Ttn,
+		Address:        m.Address,
+		Comment:        m.Comment,
+		ShippingPrice:  m.ShippingPrice,
+		OrderItems:     orderItems,
+		PostOffice:     m.PostOffice,
+		PostOfficeCity: m.PostOfficeCity,
+		Ttn:            m.Ttn,
 	}, nil
 }
 

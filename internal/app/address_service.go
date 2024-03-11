@@ -3,6 +3,7 @@ package app
 import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/database"
+	"errors"
 	"log"
 )
 
@@ -25,7 +26,14 @@ type addressService struct {
 }
 
 func (s addressService) Save(address domain.Address) (domain.Address, error) {
-	address, err := s.addressRepo.Save(address)
+	_, err := s.addressRepo.FindByUserId(address.User.Id)
+	if err == nil {
+		err = errors.New("there is already address with such user id")
+		log.Printf("AddressService: %s", err)
+		return domain.Address{}, err
+	}
+
+	address, err = s.addressRepo.Save(address)
 	if err != nil {
 		log.Printf("AddressService: %s", err)
 		return domain.Address{}, err
