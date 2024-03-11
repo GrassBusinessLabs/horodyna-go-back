@@ -5,14 +5,15 @@ import (
 )
 
 type RegisterRequest struct {
-	Name     string `json:"name" validate:"required,gte=1,max=40"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,alphanum,gte=4,max=20"`
+	Name        string `json:"name" validate:"required,gte=1,max=40"`
+	Email       string `json:"email" validate:"email"`
+	Password    string `json:"password" validate:"required,alphanum,gte=4,max=20"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
 }
 
 type AuthRequest struct {
-	Email    string `json:"email"  validate:"required,email"`
-	Password string `json:"password" validate:"required,alphanum,gte=4"`
+	PhoneNumber string `json:"phone_number" validate:"required"`
+	Password    string `json:"password" validate:"required,alphanum,gte=4"`
 }
 
 type UpdateUserRequest struct {
@@ -27,6 +28,10 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"newPassword" validate:"required,alphanum,gte=4"`
 }
 
+type SetPhoneNumberRequest struct {
+	PhoneNumber string `json:"phone_number" validate:"required"`
+}
+
 func (r UpdateUserRequest) ToDomainModel() (interface{}, error) {
 	return domain.User{
 		Name: r.Name,
@@ -35,16 +40,17 @@ func (r UpdateUserRequest) ToDomainModel() (interface{}, error) {
 
 func (r RegisterRequest) ToDomainModel() (interface{}, error) {
 	return domain.User{
-		Email:    r.Email,
-		Password: r.Password,
-		Name:     r.Name,
+		Email:       r.Email,
+		Password:    r.Password,
+		PhoneNumber: &r.PhoneNumber,
+		Name:        r.Name,
 	}, nil
 }
 
 func (r AuthRequest) ToDomainModel() (interface{}, error) {
 	return domain.User{
-		Email:    r.Email,
-		Password: r.Password,
+		PhoneNumber: &r.PhoneNumber,
+		Password:    r.Password,
 	}, nil
 }
 
@@ -52,5 +58,11 @@ func (r ChangePasswordRequest) ToDomainModel() (interface{}, error) {
 	return domain.ChangePassword{
 		OldPassword: r.OldPassword,
 		NewPassword: r.NewPassword,
+	}, nil
+}
+
+func (r SetPhoneNumberRequest) ToDomainModel() (interface{}, error) {
+	return domain.User{
+		PhoneNumber: &r.PhoneNumber,
 	}, nil
 }

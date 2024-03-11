@@ -3,9 +3,10 @@ package resources
 import "boilerplate/internal/domain"
 
 type UserDto struct {
-	Id    uint64 `json:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	Id          uint64  `json:"id"`
+	Name        string  `json:"name"`
+	Email       string  `json:"email"`
+	PhoneNumber *string `json:"phone_number"`
 }
 
 type UsersDto struct {
@@ -21,9 +22,10 @@ type AuthDto struct {
 
 func (d UserDto) DomainToDto(user domain.User) UserDto {
 	return UserDto{
-		Id:    user.Id,
-		Name:  user.Name,
-		Email: user.Email,
+		Id:          user.Id,
+		Name:        user.Name,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/http/requests"
 	"boilerplate/internal/infra/http/resources"
+	"errors"
 	"log"
 	"net/http"
 )
@@ -56,13 +57,40 @@ func (c UserController) Update() http.HandlerFunc {
 		}
 
 		u := r.Context().Value(UserKey).(domain.User)
-		user, err = c.userService.Update(u, user)
+		user, err = c.userService.Update(u)
 		if err != nil {
 			log.Printf("UserController: %s", err)
 			InternalServerError(w, err)
 			return
 		}
 
+		var userDto resources.UserDto
+		Success(w, userDto.DomainToDto(user))
+	}
+}
+
+func (c UserController) SetPhoneNumber() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		userPhoneNumber, err := requests.Bind(r, requests.SetPhoneNumberRequest{}, domain.User{})
+		if err != nil {
+			log.Printf("UserController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+		user := r.Context().Value(UserKey).(domain.User)
+		if user.PhoneNumber != nil {
+			err = errors.New("user already have a phone number")
+			log.Printf("UserController: %s", err)
+			BadRequest(w, err)
+			return
+		}
+		user.PhoneNumber = userPhoneNumber.PhoneNumber
+		user, err = c.userService.Update(user)
+		if err != nil {
+			log.Printf("UserController: %s", err)
+			InternalServerError(w, err)
+			return
+		}
 		var userDto resources.UserDto
 		Success(w, userDto.DomainToDto(user))
 	}

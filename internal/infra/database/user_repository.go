@@ -14,6 +14,7 @@ type user struct {
 	Name        string     `db:"name"`
 	Email       string     `db:"email"`
 	Password    string     `db:"password"`
+	PhoneNumber *string    `db:"phone_number"`
 	CreatedDate time.Time  `db:"created_date,omitempty"`
 	UpdatedDate time.Time  `db:"updated_date,omitempty"`
 	DeletedDate *time.Time `db:"deleted_date,omitempty"`
@@ -21,6 +22,7 @@ type user struct {
 
 type UserRepository interface {
 	FindByEmail(email string) (domain.User, error)
+	FindByPhoneNumber(phoneNumber string) (domain.User, error)
 	Save(user domain.User) (domain.User, error)
 	FindById(id uint64) (domain.User, error)
 	Update(user domain.User) (domain.User, error)
@@ -40,6 +42,16 @@ func NewUserRepository(dbSession db.Session) UserRepository {
 func (r userRepository) FindByEmail(email string) (domain.User, error) {
 	var u user
 	err := r.coll.Find(db.Cond{"email": email, "deleted_date": nil}).One(&u)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	return r.mapModelToDomain(u), nil
+}
+
+func (r userRepository) FindByPhoneNumber(phoneNumber string) (domain.User, error) {
+	var u user
+	err := r.coll.Find(db.Cond{"phone_number": phoneNumber, "deleted_date": nil}).One(&u)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -86,6 +98,7 @@ func (r userRepository) mapDomainToModel(d domain.User) user {
 		Name:        d.Name,
 		Email:       d.Email,
 		Password:    d.Password,
+		PhoneNumber: d.PhoneNumber,
 		CreatedDate: d.CreatedDate,
 		UpdatedDate: d.UpdatedDate,
 		DeletedDate: d.DeletedDate,
@@ -98,6 +111,7 @@ func (r userRepository) mapModelToDomain(m user) domain.User {
 		Name:        m.Name,
 		Email:       m.Email,
 		Password:    m.Password,
+		PhoneNumber: m.PhoneNumber,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,

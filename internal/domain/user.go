@@ -9,6 +9,7 @@ type User struct {
 	Name        string
 	Email       string
 	Password    string
+	PhoneNumber *string
 	CreatedDate time.Time
 	UpdatedDate time.Time
 	DeletedDate *time.Time

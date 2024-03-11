@@ -5,11 +5,12 @@ import (
 	"boilerplate/internal/domain"
 	"boilerplate/internal/infra/database"
 	"errors"
+	"log"
+
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/google/uuid"
 	"github.com/upper/db/v4"
 	"golang.org/x/crypto/bcrypt"
-	"log"
 )
 
 type AuthService interface {
@@ -38,7 +39,7 @@ func NewAuthService(ar database.SessionRepository, us UserService, cf config.Con
 }
 
 func (s authService) Register(user domain.User) (domain.User, string, error) {
-	_, err := s.userService.FindByEmail(user.Email)
+	_, err := s.userService.FindByPhoneNumber(*user.PhoneNumber)
 	if err == nil {
 		log.Printf("invalid credentials")
 		return domain.User{}, "", errors.New("invalid credentials")
@@ -46,19 +47,17 @@ func (s authService) Register(user domain.User) (domain.User, string, error) {
 		log.Print(err)
 		return domain.User{}, "", err
 	}
-
 	user, err = s.userService.Save(user)
 	if err != nil {
 		log.Print(err)
 		return domain.User{}, "", err
 	}
-
 	token, err := s.GenerateJwt(user)
 	return user, token, err
 }
 
 func (s authService) Login(user domain.User) (domain.User, string, error) {
-	u, err := s.userService.FindByEmail(user.Email)
+	u, err := s.userService.FindByPhoneNumber(*user.PhoneNumber)
 	if err != nil {
 		if errors.Is(err, db.ErrNoMoreRows) {
 			log.Printf("AuthService: failed to find user %s", err)
@@ -97,7 +96,7 @@ func (s authService) ChangePassword(user domain.User, req domain.ChangePassword,
 		return err
 	}
 
-	_, err = s.userService.Update(user, domain.User{Password: req.NewPassword})
+	_, err = s.userService.Update(user)
 	if err != nil {
 		return err
 	}

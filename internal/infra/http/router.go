@@ -300,6 +300,10 @@ func UserRouter(r chi.Router, uc controllers.UserController) {
 			"/",
 			uc.Update(),
 		)
+		apiRouter.Put(
+			"/phone-number",
+			uc.SetPhoneNumber(),
+		)
 		apiRouter.Delete(
 			"/",
 			uc.Delete(),
