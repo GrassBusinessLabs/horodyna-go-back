@@ -47,28 +47,6 @@ func (c UserController) FindMe() http.HandlerFunc {
 	}
 }
 
-func (c UserController) Update() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, err := requests.Bind(r, requests.UpdateUserRequest{}, domain.User{})
-		if err != nil {
-			log.Printf("UserController: %s", err)
-			BadRequest(w, err)
-			return
-		}
-
-		u := r.Context().Value(UserKey).(domain.User)
-		user, err = c.userService.Update(u)
-		if err != nil {
-			log.Printf("UserController: %s", err)
-			InternalServerError(w, err)
-			return
-		}
-
-		var userDto resources.UserDto
-		Success(w, userDto.DomainToDto(user))
-	}
-}
-
 func (c UserController) SetPhoneNumber() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userPhoneNumber, err := requests.Bind(r, requests.SetPhoneNumberRequest{}, domain.User{})

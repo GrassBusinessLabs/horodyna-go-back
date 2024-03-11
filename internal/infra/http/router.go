@@ -301,10 +301,6 @@ func UserRouter(r chi.Router, uc controllers.UserController) {
 			uc.FindMe(),
 		)
 		apiRouter.Put(
-			"/",
-			uc.Update(),
-		)
-		apiRouter.Put(
 			"/phone-number",
 			uc.SetPhoneNumber(),
 		)
