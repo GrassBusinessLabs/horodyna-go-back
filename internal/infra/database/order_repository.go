@@ -12,19 +12,20 @@ import (
 const OrdersTableName = "orders"
 
 type order struct {
-	Id            uint64     `db:"id,omitempty"`
-	Comment       string     `db:"comment"`
-	UserId        uint64     `db:"user_id"`
-	Address       *string    `db:"address"`
-	ProductsPrice float64    `db:"products_price"`
-	ShippingPrice float64    `db:"shipping_price"`
-	TotalPrice    float64    `db:"total_price"`
-	Status        string     `db:"status"`
-	PostOffice    *string    `db:"post_office"`
-	Ttn           *string    `db:"ttn"`
-	CreatedDate   time.Time  `db:"created_date,omitempty"`
-	UpdatedDate   time.Time  `db:"updated_date,omitempty"`
-	DeletedDate   *time.Time `db:"deleted_date,omitempty"`
+	Id             uint64     `db:"id,omitempty"`
+	Comment        string     `db:"comment"`
+	UserId         uint64     `db:"user_id"`
+	Address        *string    `db:"address"`
+	ProductsPrice  float64    `db:"products_price"`
+	ShippingPrice  float64    `db:"shipping_price"`
+	TotalPrice     float64    `db:"total_price"`
+	Status         string     `db:"status"`
+	PostOffice     *string    `db:"post_office"`
+	PostOfficeCity *string    `db:"post_office_city"`
+	Ttn            *string    `db:"ttn"`
+	CreatedDate    time.Time  `db:"created_date,omitempty"`
+	UpdatedDate    time.Time  `db:"updated_date,omitempty"`
+	DeletedDate    *time.Time `db:"deleted_date,omitempty"`
 }
 
 type OrderRepository interface {
@@ -387,19 +388,20 @@ func (r orderRepository) GetFarmerOdersPercentage(farmUserId uint64) ([]domain.O
 func (r orderRepository) mapDomainToModel(o domain.Order) order {
 
 	return order{
-		Id:            o.Id,
-		Comment:       o.Comment,
-		UserId:        o.User.Id,
-		Address:       o.Address,
-		ProductsPrice: o.ProductsPrice,
-		ShippingPrice: o.ShippingPrice,
-		TotalPrice:    o.TotalPrice,
-		Status:        string(o.Status),
-		PostOffice:    o.PostOffice,
-		Ttn:           o.Ttn,
-		CreatedDate:   o.CreatedDate,
-		UpdatedDate:   o.UpdatedDate,
-		DeletedDate:   o.DeletedDate,
+		Id:             o.Id,
+		Comment:        o.Comment,
+		UserId:         o.User.Id,
+		Address:        o.Address,
+		ProductsPrice:  o.ProductsPrice,
+		ShippingPrice:  o.ShippingPrice,
+		TotalPrice:     o.TotalPrice,
+		Status:         string(o.Status),
+		PostOffice:     o.PostOffice,
+		PostOfficeCity: o.PostOfficeCity,
+		Ttn:            o.Ttn,
+		CreatedDate:    o.CreatedDate,
+		UpdatedDate:    o.UpdatedDate,
+		DeletedDate:    o.DeletedDate,
 	}
 }
 
@@ -411,20 +413,21 @@ func (r orderRepository) mapModelToDomain(o order) domain.Order {
 	}
 
 	return domain.Order{
-		Id:            o.Id,
-		Comment:       o.Comment,
-		User:          mapModelToDomainUser(user),
-		Address:       o.Address,
-		ProductsPrice: o.ProductsPrice,
-		ShippingPrice: o.ShippingPrice,
-		TotalPrice:    o.TotalPrice,
-		Status:        domain.OrderStatus(o.Status),
-		PostOffice:    o.PostOffice,
-		Ttn:           o.Ttn,
-		OrderItems:    make([]domain.OrderItem, 0),
-		CreatedDate:   o.CreatedDate,
-		UpdatedDate:   o.UpdatedDate,
-		DeletedDate:   o.DeletedDate,
+		Id:             o.Id,
+		Comment:        o.Comment,
+		User:           mapModelToDomainUser(user),
+		Address:        o.Address,
+		ProductsPrice:  o.ProductsPrice,
+		ShippingPrice:  o.ShippingPrice,
+		TotalPrice:     o.TotalPrice,
+		Status:         domain.OrderStatus(o.Status),
+		PostOffice:     o.PostOffice,
+		PostOfficeCity: o.PostOfficeCity,
+		Ttn:            o.Ttn,
+		OrderItems:     make([]domain.OrderItem, 0),
+		CreatedDate:    o.CreatedDate,
+		UpdatedDate:    o.UpdatedDate,
+		DeletedDate:    o.DeletedDate,
 	}
 }
 

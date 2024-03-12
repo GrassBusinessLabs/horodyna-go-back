@@ -21,15 +21,15 @@ func (m OrderItemUpdateRequest) ToDomainModel() (interface{}, error) {
 
 func (m OrderItemRequest) ToDomainModel() (interface{}, error) {
 	return domain.OrderItem{
-		Amount:  m.Amount,
-		OfferId: m.OfferId,
+		Amount: m.Amount,
+		Offer:  domain.Offer{Id: m.OfferId},
 	}, nil
 }
 
 func (m OrderItemRequest) ToDomainModelNotInterface() (domain.OrderItem, error) {
 	return domain.OrderItem{
-		Amount:  m.Amount,
-		OfferId: m.OfferId,
+		Amount: m.Amount,
+		Offer:  domain.Offer{Id: m.OfferId},
 	}, nil
 }
 

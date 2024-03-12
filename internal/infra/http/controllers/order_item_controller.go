@@ -10,12 +10,14 @@ import (
 )
 
 type OrderItemController struct {
-	orderItemService app.OrderItemsService
+	orderItemService  app.OrderItemsService
+	imageModelService app.ImageModelService
 }
 
-func NewOrderItemController(os app.OrderItemsService) OrderItemController {
+func NewOrderItemController(os app.OrderItemsService, ims app.ImageModelService) OrderItemController {
 	return OrderItemController{
-		orderItemService: os,
+		orderItemService:  os,
+		imageModelService: ims,
 	}
 }
 
@@ -36,7 +38,7 @@ func (c OrderItemController) AddItem() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.OrderItemDto{}.DomainToDto(orderI))
+		Created(w, resources.OrderItemDto{}.DomainToDto(orderI, c.imageModelService))
 	}
 }
 
@@ -57,7 +59,7 @@ func (c OrderItemController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderItemDto{}.DomainToDto(newOrder))
+		Success(w, resources.OrderItemDto{}.DomainToDto(newOrder, c.imageModelService))
 	}
 }
 

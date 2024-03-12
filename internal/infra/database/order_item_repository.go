@@ -51,6 +51,7 @@ type OrderItemRepository interface {
 type orderItemRepository struct {
 	offerRepo OfferRepository
 	farmRepo  FarmRepository
+	OfferRepo OfferRepository
 	coll      db.Collection
 	orderColl db.Collection
 	sess      db.Session
@@ -105,7 +106,7 @@ func (r orderItemRepository) PrepareAllToSave(ords []domain.OrderItem, orderUser
 	modelItms := make([]orderItem, len(ords))
 	var prodPrice float64
 	for i, item := range ords {
-		offer, err := r.offerRepo.FindById(item.OfferId)
+		offer, err := r.offerRepo.FindById(item.Offer.Id)
 		if err != nil {
 			return []orderItem{}, 0, err
 		}
@@ -118,7 +119,7 @@ func (r orderItemRepository) PrepareAllToSave(ords []domain.OrderItem, orderUser
 		}
 
 		item.Title = offer.Title
-		item.OfferId = offer.Id
+		item.Offer = offer
 		item.Price = offer.Price
 		item.TotalPrice = math.Round(offer.Price*float64(item.Amount)*100) / 100
 		o := r.mapDomainToModel(item)
@@ -135,7 +136,7 @@ func (r orderItemRepository) PrepareAllToSave(ords []domain.OrderItem, orderUser
 
 func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain.OrderItem, error) {
 	ords.Order.Id = orderId
-	offer, err := r.offerRepo.FindById(ords.OfferId)
+	offer, err := r.offerRepo.FindById(ords.Offer.Id)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
@@ -143,7 +144,7 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	if offer.Stock < uint(ords.Amount) {
 		return domain.OrderItem{}, errors.New("the orderitem amount can`t be more than in offer")
 	}
-	exists, err := r.coll.Find(db.Cond{"order_id": orderId, "offer_id": ords.OfferId, "deleted_date": nil}).Exists()
+	exists, err := r.coll.Find(db.Cond{"order_id": orderId, "offer_id": ords.Offer.Id, "deleted_date": nil}).Exists()
 	if err == nil && exists {
 		return domain.OrderItem{}, errors.New("the order already have an offer with this id")
 	}
@@ -161,7 +162,7 @@ func (r orderItemRepository) Save(ords domain.OrderItem, orderId uint64) (domain
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
-	farm, err := r.GetFarmByOfferId(order.OfferId)
+	farm, err := r.GetFarmByOfferId(order.Offer.Id)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
@@ -185,7 +186,7 @@ func (r orderItemRepository) GetTotalPriceByOrder(orderId uint64) (float64, erro
 }
 
 func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, error) {
-	offer, err := r.offerRepo.FindById(ords.OfferId)
+	offer, err := r.offerRepo.FindById(ords.Offer.Id)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
@@ -205,7 +206,7 @@ func (r orderItemRepository) Update(ords domain.OrderItem) (domain.OrderItem, er
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
-	farm, err := r.GetFarmByOfferId(order.OfferId)
+	farm, err := r.GetFarmByOfferId(order.Offer.Id)
 	if err != nil {
 		return domain.OrderItem{}, err
 	}
@@ -239,17 +240,14 @@ func (r orderItemRepository) FindAllWithoutPagination(orderId uint64) ([]domain.
 	if err != nil {
 		return []domain.OrderItem{}, err
 	}
+
 	domainOrderItems := make([]domain.OrderItem, len(orderItems))
 	for i, oi := range orderItems {
-		orderItem := r.mapModelToDomainWithoutOrder(oi.OrderItem, farm{
-			Id:        oi.FarmId,
-			Name:      oi.Name,
-			City:      oi.City,
-			Longitude: oi.Lng,
-			Latitude:  oi.Lat,
-			Address:   oi.Address,
-			UserId:    oi.UserId,
-		})
+		orderItem, err := r.mapModelToDomain(oi.OrderItem)
+		if err != nil {
+			return []domain.OrderItem{}, err
+		}
+
 		domainOrderItems[i] = orderItem
 	}
 	return domainOrderItems, nil
@@ -286,7 +284,7 @@ func (r orderItemRepository) mapDomainToModel(m domain.OrderItem) orderItem {
 		Amount:      m.Amount,
 		Title:       m.Title,
 		OrderId:     m.Order.Id,
-		OfferId:     m.OfferId,
+		OfferId:     m.Offer.Id,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
@@ -299,6 +297,16 @@ func (r orderItemRepository) mapModelToDomain(m orderItem) (domain.OrderItem, er
 		return domain.OrderItem{}, err
 	}
 
+	offer, err := r.offerRepo.FindById(m.OfferId)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+
+	farm, err := r.farmRepo.FindById(offer.Farm.Id)
+	if err != nil {
+		return domain.OrderItem{}, err
+	}
+
 	return domain.OrderItem{
 		Id:          m.Id,
 		Price:       m.Price,
@@ -306,25 +314,10 @@ func (r orderItemRepository) mapModelToDomain(m orderItem) (domain.OrderItem, er
 		Amount:      m.Amount,
 		Title:       m.Title,
 		Order:       order,
-		OfferId:     m.OfferId,
+		Offer:       offer,
+		Farm:        farm,
 		CreatedDate: m.CreatedDate,
 		UpdatedDate: m.UpdatedDate,
 		DeletedDate: m.DeletedDate,
 	}, nil
-}
-
-func (r orderItemRepository) mapModelToDomainWithoutOrder(m orderItem, f farm) domain.OrderItem {
-	return domain.OrderItem{
-		Id:          m.Id,
-		Price:       m.Price,
-		TotalPrice:  m.TotalPrice,
-		Amount:      m.Amount,
-		Title:       m.Title,
-		Farm:        r.farmRepo.mapModelToDomainWithoutUser(f),
-		OfferId:     m.OfferId,
-		Order:       domain.Order{Id: m.OrderId},
-		CreatedDate: m.CreatedDate,
-		UpdatedDate: m.UpdatedDate,
-		DeletedDate: m.DeletedDate,
-	}
 }

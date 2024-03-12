@@ -60,7 +60,7 @@ func (c OfferController) Save() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService, resources.ImageMDto{}))
+		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService))
 	}
 }
 
@@ -86,14 +86,14 @@ func (c OfferController) FindByFarmId() http.HandlerFunc {
 			BadRequest(w, err)
 			return
 		}
-		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers, c.imageModelService, resources.ImageMDto{}))
+		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers, c.imageModelService))
 	}
 }
 
 func (c OfferController) FindById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		o := r.Context().Value(OfferKey).(domain.Offer)
-		Success(w, resources.OfferDto{}.DomainToDto(o, c.imageModelService, resources.ImageMDto{}))
+		Success(w, resources.OfferDto{}.DomainToDto(o, c.imageModelService))
 	}
 }
 
@@ -119,7 +119,7 @@ func (c OfferController) ListView() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers, c.imageModelService, resources.ImageMDto{}))
+		Success(w, resources.OfferDto{}.DomainToDtoPaginatedCollection(offers, c.imageModelService))
 	}
 }
 
@@ -140,7 +140,7 @@ func (c OfferController) Update() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OfferDto{}.DomainToDto(newOffer, c.imageModelService, resources.ImageMDto{}))
+		Success(w, resources.OfferDto{}.DomainToDto(newOffer, c.imageModelService))
 	}
 }
 
@@ -177,7 +177,7 @@ func (c OfferController) AddAdditionalImage() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService, resources.ImageMDto{}))
+		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService))
 	}
 }
 
@@ -192,6 +192,6 @@ func (c OfferController) DeleteAdditionalImage() http.HandlerFunc {
 			return
 		}
 
-		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService, resources.ImageMDto{}))
+		Created(w, resources.OfferDto{}.DomainToDto(offer, c.imageModelService))
 	}
 }

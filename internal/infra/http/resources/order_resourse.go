@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"boilerplate/internal/app"
 	"boilerplate/internal/domain"
 )
 
@@ -80,10 +81,10 @@ type OrderDtoWithOrderItems struct {
 	CreatedDate    string         `json:"created_data"`
 }
 
-func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order) OrderDtoWithOrderItems {
+func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, imageModelService app.ImageModelService) OrderDtoWithOrderItems {
 	orderItems := make([]OrderItemDto, len(order.OrderItems))
 	for i, item := range order.OrderItems {
-		orderItems[i] = OrderItemDto{}.DomainToDto(item)
+		orderItems[i] = OrderItemDto{}.DomainToDto(item, imageModelService)
 	}
 
 	return OrderDtoWithOrderItems{
@@ -109,21 +110,21 @@ type OrdersDtoWithOrderItems struct {
 	Total uint64                   `json:"total"`
 }
 
-func (d OrderDtoWithOrderItems) DomainToDtoCollection(orders []domain.Order) []OrderDtoWithOrderItems {
+func (d OrderDtoWithOrderItems) DomainToDtoCollection(orders []domain.Order, imageModelService app.ImageModelService) []OrderDtoWithOrderItems {
 	result := make([]OrderDtoWithOrderItems, len(orders))
 
 	for i := range orders {
-		result[i] = d.DomainToDto(orders[i])
+		result[i] = d.DomainToDto(orders[i], imageModelService)
 	}
 
 	return result
 }
 
-func (d OrderDtoWithOrderItems) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDtoWithOrderItems {
+func (d OrderDtoWithOrderItems) DomainToDtoPaginatedCollection(orders domain.Orders, imageModelService app.ImageModelService) OrdersDtoWithOrderItems {
 	result := make([]OrderDtoWithOrderItems, len(orders.Items))
 
 	for i := range orders.Items {
-		result[i] = d.DomainToDto(orders.Items[i])
+		result[i] = d.DomainToDto(orders.Items[i], imageModelService)
 	}
 
 	return OrdersDtoWithOrderItems{Items: result, Pages: orders.Pages, Total: orders.Total}
@@ -191,11 +192,11 @@ type SplitedOrdersDto struct {
 	SplitedOrders map[uint64]OrderDtoWithOrderItems `json:"splited_orders"`
 }
 
-func (d SplitedOrdersDto) DomainToDto(splitedOrders map[uint64]domain.Order) SplitedOrdersDto {
+func (d SplitedOrdersDto) DomainToDto(splitedOrders map[uint64]domain.Order, imageModelService app.ImageModelService) SplitedOrdersDto {
 	splitedOrdersDto := make(map[uint64]OrderDtoWithOrderItems, len(splitedOrders))
 
 	for key, order := range splitedOrders {
-		splitedOrdersDto[key] = OrderDtoWithOrderItems{}.DomainToDto(order)
+		splitedOrdersDto[key] = OrderDtoWithOrderItems{}.DomainToDto(order, imageModelService)
 	}
 
 	return SplitedOrdersDto{SplitedOrders: splitedOrdersDto}

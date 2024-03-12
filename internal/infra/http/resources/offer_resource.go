@@ -27,7 +27,7 @@ type OffersDto struct {
 	Total uint64     `json:"total"`
 }
 
-func (d OfferDto) DomainToDto(offer domain.Offer, imageModelService app.ImageModelService, imageMDto ImageMDto) OfferDto {
+func (d OfferDto) DomainToDto(offer domain.Offer, imageModelService app.ImageModelService) OfferDto {
 	additionalImages, _ := imageModelService.FindAll("offers", offer.Id)
 	return OfferDto{
 		Id:               offer.Id,
@@ -38,18 +38,18 @@ func (d OfferDto) DomainToDto(offer domain.Offer, imageModelService app.ImageMod
 		Unit:             offer.Unit,
 		Stock:            offer.Stock,
 		Cover:            offer.Cover.Name,
-		AdditionalImages: imageMDto.DomainToDtoMass(additionalImages).Items,
+		AdditionalImages: ImageMDto{}.DomainToDtoMass(additionalImages).Items,
 		Status:           offer.Status,
 		FarmId:           offer.Farm.Id,
 		User:             UserDto{}.DomainToDto(offer.User),
 	}
 }
 
-func (d OfferDto) DomainToDtoPaginatedCollection(offers domain.Offers, imageModelService app.ImageModelService, imageMDto ImageMDto) OffersDto {
+func (d OfferDto) DomainToDtoPaginatedCollection(offers domain.Offers, imageModelService app.ImageModelService) OffersDto {
 	result := make([]OfferDto, len(offers.Items))
 
 	for i := range offers.Items {
-		result[i] = d.DomainToDto(offers.Items[i], imageModelService, imageMDto)
+		result[i] = d.DomainToDto(offers.Items[i], imageModelService)
 	}
 
 	return OffersDto{Items: result, Pages: offers.Pages, Total: offers.Total}

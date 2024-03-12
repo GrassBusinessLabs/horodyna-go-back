@@ -14,14 +14,16 @@ import (
 )
 
 type OrderController struct {
-	orderService     app.OrderService
-	orderItemService app.OrderItemsService
+	orderService      app.OrderService
+	orderItemService  app.OrderItemsService
+	imageModelService app.ImageModelService
 }
 
-func NewOrderController(os app.OrderService, ordItemServ app.OrderItemsService) OrderController {
+func NewOrderController(os app.OrderService, ois app.OrderItemsService, ims app.ImageModelService) OrderController {
 	return OrderController{
-		orderService:     os,
-		orderItemService: ordItemServ,
+		orderService:      os,
+		orderItemService:  ois,
+		imageModelService: ims,
 	}
 }
 
@@ -58,7 +60,7 @@ func (c OrderController) FindById() http.HandlerFunc {
 		}
 
 		order.OrderItems = orderItems
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(order))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(order, c.imageModelService))
 	}
 }
 
@@ -79,7 +81,7 @@ func (c OrderController) FindAllByUserId() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoPaginatedCollection(orders))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoPaginatedCollection(orders, c.imageModelService))
 	}
 }
 
@@ -135,7 +137,7 @@ func (c OrderController) FindByFarmUserId() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoPaginatedCollection(orders))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDtoPaginatedCollection(orders, c.imageModelService))
 	}
 }
 
@@ -208,7 +210,7 @@ func (c OrderController) SplitOrderByFarms() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.SplitedOrdersDto{}.DomainToDto(splitedOrders))
+		Success(w, resources.SplitedOrdersDto{}.DomainToDto(splitedOrders, c.imageModelService))
 	}
 }
 
@@ -237,7 +239,7 @@ func (c OrderController) SubmitSplitedOrder() http.HandlerFunc {
 			return
 		}
 
-		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(submitedOrder))
+		Success(w, resources.OrderDtoWithOrderItems{}.DomainToDto(submitedOrder, c.imageModelService))
 	}
 }
 

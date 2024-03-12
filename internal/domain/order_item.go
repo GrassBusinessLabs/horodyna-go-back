@@ -11,7 +11,7 @@ type OrderItem struct {
 	TotalPrice  float64
 	Amount      uint32
 	Order       Order
-	OfferId     uint64
+	Offer       Offer
 	Farm        Farm
 	CreatedDate time.Time
 	UpdatedDate time.Time
