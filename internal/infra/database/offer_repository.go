@@ -28,10 +28,11 @@ type offer struct {
 }
 
 type offerWithUser struct {
-	Offer     offer
-	UserId    uint64 `db:"id_user"`
-	UserName  string `db:"user_name"`
-	UserEmail string `db:"user_email"`
+	Offer           offer
+	UserId          uint64 `db:"id_user"`
+	UserName        string `db:"user_name"`
+	UserEmail       string `db:"user_email"`
+	UserPhoneNumber string `db:"user_phone_number"`
 }
 
 type OfferRepository interface {
@@ -114,7 +115,7 @@ func (r offerRepository) Delete(id uint64) error {
 
 func (r offerRepository) FindAllByFarmId(farmId uint64, p domain.Pagination) (domain.Offers, error) {
 	var data []offerWithUser
-	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email", "u.phone_number AS user_phone_number").
 		From("offers AS ofr").
 		Where(" ofr.farm_id = ? AND ofr.deleted_date IS NULL", farmId).
 		Join("users AS u").On("u.id = ofr.user_id").
@@ -151,7 +152,7 @@ func (r offerRepository) FindOnlyOffersByFarmId(farmId uint64) ([]domain.Offer, 
 
 func (r offerRepository) FindAll(user domain.User, p domain.Pagination) (domain.Offers, error) {
 	var data []offerWithUser
-	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+	query := r.coll.Session().SQL().Select("ofr.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email", "u.phone_number AS user_phone_number").
 		From("offers AS ofr")
 	if user.Id != 0 {
 		query = query.Where("ofr.user_id = ? AND ofr.deleted_date IS NULL", user.Id)
@@ -211,9 +212,10 @@ func (r offerRepository) InsertUsersIntoArray(offers []domain.Offer) error {
 
 func mapModelToDomainUser(m user) domain.User {
 	return domain.User{
-		Id:    m.Id,
-		Name:  m.Name,
-		Email: m.Email,
+		Id:          m.Id,
+		Name:        m.Name,
+		Email:       m.Email,
+		PhoneNumber: m.PhoneNumber,
 	}
 }
 
@@ -267,7 +269,7 @@ func (f offerRepository) mapModelsToDomainsWithFarm(offers []offerWithUser) doma
 	domainOffers := make([]domain.Offer, len(offers))
 	for i, item := range offers {
 		domainOffers[i] = f.mapModelToDomain(item.Offer)
-		domainOffers[i].User = mapModelToDomainUser(user{Id: item.UserId, Name: item.UserName, Email: item.UserEmail})
+		domainOffers[i].User = mapModelToDomainUser(user{Id: item.UserId, Name: item.UserName, Email: item.UserEmail, PhoneNumber: &item.UserPhoneNumber})
 	}
 
 	return domain.Offers{Items: domainOffers}

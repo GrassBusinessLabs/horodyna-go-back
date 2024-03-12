@@ -24,10 +24,11 @@ type farm struct {
 }
 
 type farmWithUser struct {
-	Farm      farm
-	UserId    uint64 `db:"id_user"`
-	UserName  string `db:"user_name"`
-	UserEmail string `db:"user_email"`
+	Farm            farm
+	UserId          uint64 `db:"id_user"`
+	UserName        string `db:"user_name"`
+	UserEmail       string `db:"user_email"`
+	UserPhoneNumber string `db:"user_phone_number"`
 }
 
 type FarmRepository interface {
@@ -129,7 +130,7 @@ func (r farmRepository) FindAllByCoords(points domain.Points, p domain.Paginatio
 
 func (r farmRepository) findFarmsWithUsers(cond db.Cond, p domain.Pagination) (domain.Farms, error) {
 	var farms []farmWithUser
-	query := r.coll.Session().SQL().Select("farms.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+	query := r.coll.Session().SQL().Select("farms.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email", "u.phone_number AS user_phone_number").
 		From("farms").
 		Where(cond).
 		Join("users as u").On("u.id = farms.user_id")
@@ -141,7 +142,7 @@ func (r farmRepository) findFarmsWithUsers(cond db.Cond, p domain.Pagination) (d
 
 	domainFarms := make([]domain.Farm, len(farms))
 	for i, farm := range farms {
-		domainFarms[i] = r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail})
+		domainFarms[i] = r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail, PhoneNumber: &farm.UserPhoneNumber})
 	}
 	farmsR := domain.Farms{Items: domainFarms}
 	totalCount, err := res.TotalEntries()
@@ -157,7 +158,7 @@ func (r farmRepository) findFarmsWithUsers(cond db.Cond, p domain.Pagination) (d
 
 func (r farmRepository) findFarmWithUser(farmId uint64) (domain.Farm, error) {
 	var farm farmWithUser
-	err := r.coll.Session().SQL().Select("farms.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email").
+	err := r.coll.Session().SQL().Select("farms.*", "u.id AS id_user", "u.name AS user_name", "u.email AS user_email", "u.phone_number AS user_phone_number").
 		From("farms").
 		Where(db.Cond{"farms.id": farmId, "farms.deleted_date": nil}).
 		Join("users as u").On("u.id = farms.user_id").One(&farm)
@@ -165,7 +166,7 @@ func (r farmRepository) findFarmWithUser(farmId uint64) (domain.Farm, error) {
 		return domain.Farm{}, err
 	}
 
-	return r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail}), nil
+	return r.mapModelToDomain(farm.Farm, user{Id: farm.UserId, Name: farm.UserName, Email: farm.UserEmail, PhoneNumber: &farm.UserPhoneNumber}), nil
 }
 
 func (r farmRepository) GetAllImages(farmId uint64) []domain.Image {
