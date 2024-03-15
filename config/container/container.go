@@ -78,7 +78,7 @@ func New(conf config.Configuration) Container {
 	orderItemService := app.NewOrderItemsService(orderItemRepository, orderRepository)
 	addressService := app.NewAddressService(addressRepository)
 	invoiceService := app.NewInvoiceService(invoiceRepository)
-	monobankService := app.NewMonobankService("", invoiceService)
+	monobankService := app.NewMonobankService(conf.MonobankPrivateKey, invoiceService)
 
 	authController := controllers.NewAuthController(authService, userService)
 	userController := controllers.NewUserController(userService)

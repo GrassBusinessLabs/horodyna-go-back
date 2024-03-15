@@ -31,7 +31,7 @@ func GetConfiguration() Configuration {
 		FileStorageLocation: getOrDefault("FILES_LOCATION", "file_storage"),
 		JwtSecret:           getOrDefault("JWT_SECRET", "1234567890"),
 		JwtTTL:              72 * time.Hour,
-		MonobankPrivateKey:  "key_right_here",
+		MonobankPrivateKey:  getOrDefault("MONOBANK_PRIVATE_KEY", "uES2_x-N_rd3eysY_-SXsoqBAIgmK4lLnqZpRZMKdAM4"),
 	}
 }
 
