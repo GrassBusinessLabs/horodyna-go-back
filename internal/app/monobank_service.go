@@ -147,7 +147,6 @@ func (s monobankService) makeHttpRequest(method, url string, requestBody []byte)
 		return nil, err
 	}
 
-	log.Print(s.privateKey)
 	req.Header.Set(apiKeyHeader, s.privateKey)
 	req.Header.Set("Content-Type", contentType)
 
