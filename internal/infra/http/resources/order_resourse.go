@@ -6,19 +6,20 @@ import (
 )
 
 type OrderDto struct {
-	Id              uint64  `json:"id"`
-	OrderItemsCount uint64  `json:"order_items_count"`
-	Status          string  `json:"status"`
-	Comment         string  `json:"comment"`
-	Address         *string `json:"address"`
-	User            UserDto `json:"user"`
-	ProductPrice    float64 `json:"product_price"`
-	ShippingPrice   float64 `json:"shipping_price"`
-	TotalPrice      float64 `json:"total_price"`
-	PostOffice      *string `json:"post_office"`
-	PostOfficeCity  *string `json:"post_office_city"`
-	Ttn             *string `json:"ttn"`
-	CreatedDate     string  `json:"created_data"`
+	Id               uint64  `json:"id"`
+	OrderItemsCount  uint64  `json:"order_items_count"`
+	Status           string  `json:"status"`
+	Comment          string  `json:"comment"`
+	Address          *string `json:"address"`
+	User             UserDto `json:"user"`
+	ProductPrice     float64 `json:"product_price"`
+	ShippingPrice    float64 `json:"shipping_price"`
+	TotalPrice       float64 `json:"total_price"`
+	PostOffice       *string `json:"post_office"`
+	PostOfficeCity   *string `json:"post_office_city"`
+	Ttn              *string `json:"ttn"`
+	IsPercentagePaid *bool   `json:"is_percentage_paid"`
+	CreatedDate      string  `json:"created_data"`
 }
 
 type OrdersDto struct {
@@ -29,19 +30,20 @@ type OrdersDto struct {
 
 func (d OrderDto) DomainToDto(order domain.Order) OrderDto {
 	return OrderDto{
-		Id:              order.Id,
-		OrderItemsCount: order.OrderItemsCount,
-		Status:          string(order.Status),
-		Comment:         order.Comment,
-		Address:         order.Address,
-		User:            UserDto{}.DomainToDto(order.User),
-		ProductPrice:    order.ProductsPrice,
-		ShippingPrice:   order.ShippingPrice,
-		TotalPrice:      order.TotalPrice,
-		PostOffice:      order.PostOffice,
-		PostOfficeCity:  order.PostOfficeCity,
-		Ttn:             order.Ttn,
-		CreatedDate:     order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
+		Id:               order.Id,
+		OrderItemsCount:  order.OrderItemsCount,
+		Status:           string(order.Status),
+		Comment:          order.Comment,
+		Address:          order.Address,
+		User:             UserDto{}.DomainToDto(order.User),
+		ProductPrice:     order.ProductsPrice,
+		ShippingPrice:    order.ShippingPrice,
+		TotalPrice:       order.TotalPrice,
+		PostOffice:       order.PostOffice,
+		PostOfficeCity:   order.PostOfficeCity,
+		Ttn:              order.Ttn,
+		IsPercentagePaid: order.IsPercentagePaid,
+		CreatedDate:      order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
 
@@ -66,19 +68,20 @@ func (d OrderDto) DomainToDtoPaginatedCollection(orders domain.Orders) OrdersDto
 }
 
 type OrderDtoWithOrderItems struct {
-	Id             uint64         `json:"id"`
-	OrderItems     []OrderItemDto `json:"order_items"`
-	Status         string         `json:"status"`
-	Comment        string         `json:"comment"`
-	Address        *string        `json:"address"`
-	User           UserDto        `json:"user"`
-	ProductPrice   float64        `json:"product_price"`
-	ShippingPrice  float64        `json:"shipping_price"`
-	TotalPrice     float64        `json:"total_price"`
-	PostOffice     *string        `json:"post_office"`
-	PostOfficeCity *string        `json:"post_office_city"`
-	Ttn            *string        `json:"ttn"`
-	CreatedDate    string         `json:"created_data"`
+	Id               uint64         `json:"id"`
+	OrderItems       []OrderItemDto `json:"order_items"`
+	Status           string         `json:"status"`
+	Comment          string         `json:"comment"`
+	Address          *string        `json:"address"`
+	User             UserDto        `json:"user"`
+	ProductPrice     float64        `json:"product_price"`
+	ShippingPrice    float64        `json:"shipping_price"`
+	TotalPrice       float64        `json:"total_price"`
+	PostOffice       *string        `json:"post_office"`
+	PostOfficeCity   *string        `json:"post_office_city"`
+	Ttn              *string        `json:"ttn"`
+	IsPercentagePaid *bool          `json:"is_percentage_paid"`
+	CreatedDate      string         `json:"created_data"`
 }
 
 func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, imageModelService app.ImageModelService) OrderDtoWithOrderItems {
@@ -88,19 +91,20 @@ func (d OrderDtoWithOrderItems) DomainToDto(order domain.Order, imageModelServic
 	}
 
 	return OrderDtoWithOrderItems{
-		Id:             order.Id,
-		OrderItems:     orderItems,
-		Status:         string(order.Status),
-		Comment:        order.Comment,
-		Address:        order.Address,
-		User:           UserDto{}.DomainToDto(order.User),
-		ProductPrice:   order.ProductsPrice,
-		ShippingPrice:  order.ShippingPrice,
-		TotalPrice:     order.TotalPrice,
-		PostOffice:     order.PostOffice,
-		PostOfficeCity: order.PostOfficeCity,
-		Ttn:            order.Ttn,
-		CreatedDate:    order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
+		Id:               order.Id,
+		OrderItems:       orderItems,
+		Status:           string(order.Status),
+		Comment:          order.Comment,
+		Address:          order.Address,
+		User:             UserDto{}.DomainToDto(order.User),
+		ProductPrice:     order.ProductsPrice,
+		ShippingPrice:    order.ShippingPrice,
+		TotalPrice:       order.TotalPrice,
+		PostOffice:       order.PostOffice,
+		PostOfficeCity:   order.PostOfficeCity,
+		Ttn:              order.Ttn,
+		IsPercentagePaid: order.IsPercentagePaid,
+		CreatedDate:      order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
 
@@ -131,20 +135,21 @@ func (d OrderDtoWithOrderItems) DomainToDtoPaginatedCollection(orders domain.Ord
 }
 
 type OrderDtoWithPercentage struct {
-	Id              uint64   `json:"id"`
-	OrderItemsCount uint64   `json:"order_items_count"`
-	Status          string   `json:"status"`
-	Comment         string   `json:"comment"`
-	Address         *string  `json:"address"`
-	User            UserDto  `json:"user"`
-	ProductPrice    float64  `json:"product_price"`
-	ShippingPrice   float64  `json:"shipping_price"`
-	TotalPrice      float64  `json:"total_price"`
-	PostOffice      *string  `json:"post_office"`
-	PostOfficeCity  *string  `json:"post_office_city"`
-	Ttn             *string  `json:"ttn"`
-	CreatedDate     string   `json:"created_data"`
-	Percenatge      *float64 `json:"percentage"`
+	Id               uint64   `json:"id"`
+	OrderItemsCount  uint64   `json:"order_items_count"`
+	Status           string   `json:"status"`
+	Comment          string   `json:"comment"`
+	Address          *string  `json:"address"`
+	User             UserDto  `json:"user"`
+	ProductPrice     float64  `json:"product_price"`
+	ShippingPrice    float64  `json:"shipping_price"`
+	TotalPrice       float64  `json:"total_price"`
+	PostOffice       *string  `json:"post_office"`
+	PostOfficeCity   *string  `json:"post_office_city"`
+	Ttn              *string  `json:"ttn"`
+	CreatedDate      string   `json:"created_data"`
+	IsPercentagePaid *bool    `json:"is_percentage_paid"`
+	Percenatge       *float64 `json:"percentage"`
 }
 
 type OrdersDtoWithPercentage struct {
@@ -161,20 +166,21 @@ func (d OrdersDtoWithPercentage) DomainToDto(orders []domain.Order, total float6
 
 func (d OrderDtoWithPercentage) DomainToDto(order domain.Order) OrderDtoWithPercentage {
 	return OrderDtoWithPercentage{
-		Id:              order.Id,
-		OrderItemsCount: order.OrderItemsCount,
-		Status:          string(order.Status),
-		Comment:         order.Comment,
-		Address:         order.Address,
-		User:            UserDto{}.DomainToDto(order.User),
-		ProductPrice:    order.ProductsPrice,
-		ShippingPrice:   order.ShippingPrice,
-		TotalPrice:      order.TotalPrice,
-		PostOffice:      order.PostOffice,
-		PostOfficeCity:  order.PostOfficeCity,
-		Ttn:             order.Ttn,
-		CreatedDate:     order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
-		Percenatge:      order.Percentage,
+		Id:               order.Id,
+		OrderItemsCount:  order.OrderItemsCount,
+		Status:           string(order.Status),
+		Comment:          order.Comment,
+		Address:          order.Address,
+		User:             UserDto{}.DomainToDto(order.User),
+		ProductPrice:     order.ProductsPrice,
+		ShippingPrice:    order.ShippingPrice,
+		TotalPrice:       order.TotalPrice,
+		PostOffice:       order.PostOffice,
+		PostOfficeCity:   order.PostOfficeCity,
+		Ttn:              order.Ttn,
+		CreatedDate:      order.CreatedDate.Format("2006-01-02T15:04:05Z07:00"),
+		Percenatge:       order.Percentage,
+		IsPercentagePaid: order.IsPercentagePaid,
 	}
 }
 

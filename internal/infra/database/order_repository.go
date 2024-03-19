@@ -12,20 +12,21 @@ import (
 const OrdersTableName = "orders"
 
 type order struct {
-	Id             uint64     `db:"id,omitempty"`
-	Comment        string     `db:"comment"`
-	UserId         uint64     `db:"user_id"`
-	Address        *string    `db:"address"`
-	ProductsPrice  float64    `db:"products_price"`
-	ShippingPrice  float64    `db:"shipping_price"`
-	TotalPrice     float64    `db:"total_price"`
-	Status         string     `db:"status"`
-	PostOffice     *string    `db:"post_office"`
-	PostOfficeCity *string    `db:"post_office_city"`
-	Ttn            *string    `db:"ttn"`
-	CreatedDate    time.Time  `db:"created_date,omitempty"`
-	UpdatedDate    time.Time  `db:"updated_date,omitempty"`
-	DeletedDate    *time.Time `db:"deleted_date,omitempty"`
+	Id               uint64     `db:"id,omitempty"`
+	Comment          string     `db:"comment"`
+	UserId           uint64     `db:"user_id"`
+	Address          *string    `db:"address"`
+	ProductsPrice    float64    `db:"products_price"`
+	ShippingPrice    float64    `db:"shipping_price"`
+	TotalPrice       float64    `db:"total_price"`
+	Status           string     `db:"status"`
+	PostOffice       *string    `db:"post_office"`
+	PostOfficeCity   *string    `db:"post_office_city"`
+	Ttn              *string    `db:"ttn"`
+	IsPercentagePaid *bool      `db:"is_percentage_paid"`
+	CreatedDate      time.Time  `db:"created_date,omitempty"`
+	UpdatedDate      time.Time  `db:"updated_date,omitempty"`
+	DeletedDate      *time.Time `db:"deleted_date,omitempty"`
 }
 
 type OrderRepository interface {
@@ -40,7 +41,7 @@ type OrderRepository interface {
 	SubmitSplitedOrder(order domain.Order, farmId uint64) (domain.Order, error)
 	DeleteSplitedOrder(order domain.Order, farmId uint64) error
 	GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order, error)
-	GetFarmerOdersPercentage(farmUserId uint64) ([]domain.Order, float64, error)
+	GetFarmerOrdersPercentage(farmUserId uint64) ([]domain.Order, float64, error)
 }
 
 type orderRepository struct {
@@ -359,7 +360,7 @@ func (r orderRepository) GetActiveOrdersByFarmId(farmId uint64) ([]domain.Order,
 	return r.mapModelToDomainCollection(activeOrders), nil
 }
 
-func (r orderRepository) GetFarmerOdersPercentage(farmUserId uint64) ([]domain.Order, float64, error) {
+func (r orderRepository) GetFarmerOrdersPercentage(farmUserId uint64) ([]domain.Order, float64, error) {
 	var orders []order
 	query := r.coll.Session().SQL().
 		Select("orders.*").
@@ -367,7 +368,7 @@ func (r orderRepository) GetFarmerOdersPercentage(farmUserId uint64) ([]domain.O
 		Join("order_items").On("order_items.order_id = orders.id").
 		Join("offers").On("order_items.offer_id = offers.id").
 		Join("farms").On("offers.farm_id = farms.id").
-		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil, "orders.status": "COMPLETED"}).
+		Where(db.Cond{"farms.user_id": farmUserId, "orders.deleted_date": nil, "orders.status": "COMPLETED", "orders.is_percentage_paid": false}).
 		Distinct()
 	err := query.All(&orders)
 	if err != nil {
@@ -388,20 +389,21 @@ func (r orderRepository) GetFarmerOdersPercentage(farmUserId uint64) ([]domain.O
 func (r orderRepository) mapDomainToModel(o domain.Order) order {
 
 	return order{
-		Id:             o.Id,
-		Comment:        o.Comment,
-		UserId:         o.User.Id,
-		Address:        o.Address,
-		ProductsPrice:  o.ProductsPrice,
-		ShippingPrice:  o.ShippingPrice,
-		TotalPrice:     o.TotalPrice,
-		Status:         string(o.Status),
-		PostOffice:     o.PostOffice,
-		PostOfficeCity: o.PostOfficeCity,
-		Ttn:            o.Ttn,
-		CreatedDate:    o.CreatedDate,
-		UpdatedDate:    o.UpdatedDate,
-		DeletedDate:    o.DeletedDate,
+		Id:               o.Id,
+		Comment:          o.Comment,
+		UserId:           o.User.Id,
+		Address:          o.Address,
+		ProductsPrice:    o.ProductsPrice,
+		ShippingPrice:    o.ShippingPrice,
+		TotalPrice:       o.TotalPrice,
+		Status:           string(o.Status),
+		PostOffice:       o.PostOffice,
+		PostOfficeCity:   o.PostOfficeCity,
+		Ttn:              o.Ttn,
+		IsPercentagePaid: o.IsPercentagePaid,
+		CreatedDate:      o.CreatedDate,
+		UpdatedDate:      o.UpdatedDate,
+		DeletedDate:      o.DeletedDate,
 	}
 }
 
@@ -413,21 +415,22 @@ func (r orderRepository) mapModelToDomain(o order) domain.Order {
 	}
 
 	return domain.Order{
-		Id:             o.Id,
-		Comment:        o.Comment,
-		User:           mapModelToDomainUser(user),
-		Address:        o.Address,
-		ProductsPrice:  o.ProductsPrice,
-		ShippingPrice:  o.ShippingPrice,
-		TotalPrice:     o.TotalPrice,
-		Status:         domain.OrderStatus(o.Status),
-		PostOffice:     o.PostOffice,
-		PostOfficeCity: o.PostOfficeCity,
-		Ttn:            o.Ttn,
-		OrderItems:     make([]domain.OrderItem, 0),
-		CreatedDate:    o.CreatedDate,
-		UpdatedDate:    o.UpdatedDate,
-		DeletedDate:    o.DeletedDate,
+		Id:               o.Id,
+		Comment:          o.Comment,
+		User:             mapModelToDomainUser(user),
+		Address:          o.Address,
+		ProductsPrice:    o.ProductsPrice,
+		ShippingPrice:    o.ShippingPrice,
+		TotalPrice:       o.TotalPrice,
+		Status:           domain.OrderStatus(o.Status),
+		PostOffice:       o.PostOffice,
+		PostOfficeCity:   o.PostOfficeCity,
+		Ttn:              o.Ttn,
+		OrderItems:       make([]domain.OrderItem, 0),
+		IsPercentagePaid: o.IsPercentagePaid,
+		CreatedDate:      o.CreatedDate,
+		UpdatedDate:      o.UpdatedDate,
+		DeletedDate:      o.DeletedDate,
 	}
 }
 

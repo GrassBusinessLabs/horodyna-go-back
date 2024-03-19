@@ -16,23 +16,24 @@ const (
 )
 
 type Order struct {
-	Id              uint64
-	Comment         string
-	User            User
-	Address         *string
-	OrderItems      []OrderItem
-	OrderItemsCount uint64
-	ProductsPrice   float64
-	ShippingPrice   float64
-	TotalPrice      float64
-	Status          OrderStatus
-	PostOffice      *string
-	PostOfficeCity  *string
-	Ttn             *string
-	Percentage      *float64
-	CreatedDate     time.Time
-	UpdatedDate     time.Time
-	DeletedDate     *time.Time
+	Id               uint64
+	Comment          string
+	User             User
+	Address          *string
+	OrderItems       []OrderItem
+	OrderItemsCount  uint64
+	ProductsPrice    float64
+	ShippingPrice    float64
+	TotalPrice       float64
+	Status           OrderStatus
+	PostOffice       *string
+	PostOfficeCity   *string
+	Ttn              *string
+	Percentage       *float64
+	IsPercentagePaid *bool
+	CreatedDate      time.Time
+	UpdatedDate      time.Time
+	DeletedDate      *time.Time
 }
 
 type Orders struct {

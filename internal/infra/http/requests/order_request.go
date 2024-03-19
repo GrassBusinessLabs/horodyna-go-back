@@ -15,12 +15,13 @@ type OrderRequest struct {
 }
 
 type UpdateOrderRequest struct {
-	Address        *string `json:"address"`
-	Comment        string  `json:"comment"`
-	ShippingPrice  float64 `json:"shipping_price"`
-	PostOffice     *string `json:"post_office"`
-	PostOfficeCity *string `json:"post_office_city"`
-	Ttn            *string `json:"ttn"`
+	Address          *string `json:"address"`
+	Comment          string  `json:"comment"`
+	ShippingPrice    float64 `json:"shipping_price"`
+	PostOffice       *string `json:"post_office"`
+	PostOfficeCity   *string `json:"post_office_city"`
+	IsPercentagePaid *bool   `json:"is_percentage_paid"`
+	Ttn              *string `json:"ttn"`
 }
 
 type OrderStatusRequest struct {
@@ -29,12 +30,13 @@ type OrderStatusRequest struct {
 
 func (m UpdateOrderRequest) ToDomainModel() (interface{}, error) {
 	return domain.Order{
-		Address:        m.Address,
-		Comment:        m.Comment,
-		ShippingPrice:  m.ShippingPrice,
-		PostOffice:     m.PostOffice,
-		PostOfficeCity: m.PostOfficeCity,
-		Ttn:            m.Ttn,
+		Address:          m.Address,
+		Comment:          m.Comment,
+		ShippingPrice:    m.ShippingPrice,
+		PostOffice:       m.PostOffice,
+		PostOfficeCity:   m.PostOfficeCity,
+		Ttn:              m.Ttn,
+		IsPercentagePaid: m.IsPercentagePaid,
 	}, nil
 }
 
